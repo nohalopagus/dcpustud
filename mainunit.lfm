@@ -1,0 +1,1585 @@
+object Main: TMain
+  Left = 247
+  Height = 551
+  Top = 192
+  Width = 920
+  Caption = 'DCPU-16 Studio'
+  ClientHeight = 531
+  ClientWidth = 920
+  Menu = MainMenu1
+  OnCloseQuery = FormCloseQuery
+  OnCreate = FormCreate
+  LCLVersion = '0.9.30.4'
+  object lbDisassembly: TListBox
+    AnchorSideLeft.Control = lbDisassemblyLabel
+    AnchorSideTop.Control = lbDisassemblyLabel
+    AnchorSideTop.Side = asrBottom
+    Left = 8
+    Height = 164
+    Top = 24
+    Width = 256
+    Font.Pitch = fpFixed
+    ItemHeight = 0
+    OnDblClick = lbDisassemblyDblClick
+    ParentFont = False
+    TabOrder = 0
+  end
+  object lbDisassemblyLabel: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = Owner
+    Left = 8
+    Height = 16
+    Top = 8
+    Width = 69
+    BorderSpacing.Left = 8
+    BorderSpacing.Top = 8
+    Caption = '&Disassembly:'
+    FocusControl = lbDisassembly
+    ParentColor = False
+  end
+  object lbRegisters: TLabel
+    AnchorSideLeft.Control = lbDisassembly
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = Owner
+    Left = 272
+    Height = 16
+    Top = 8
+    Width = 51
+    BorderSpacing.Left = 8
+    BorderSpacing.Top = 8
+    Caption = '&Registers:'
+    FocusControl = seA
+    ParentColor = False
+  end
+  object lbA: TLabel
+    AnchorSideLeft.Control = lbRegisters
+    AnchorSideTop.Control = seA
+    AnchorSideTop.Side = asrCenter
+    Left = 280
+    Height = 16
+    Top = 27
+    Width = 12
+    BorderSpacing.Left = 8
+    Caption = 'A:'
+    FocusControl = seA
+    ParentColor = False
+  end
+  object seA: TSpinEdit
+    Tag = 1
+    AnchorSideLeft.Control = lbRegisters
+    AnchorSideTop.Control = lbRegisters
+    AnchorSideTop.Side = asrBottom
+    Left = 312
+    Height = 23
+    Top = 24
+    Width = 66
+    BorderSpacing.Left = 40
+    MaxValue = 65535
+    OnChange = seAChange
+    TabOrder = 2
+  end
+  object seB: TSpinEdit
+    Tag = 2
+    AnchorSideLeft.Control = seA
+    AnchorSideTop.Control = seA
+    AnchorSideTop.Side = asrBottom
+    Left = 312
+    Height = 23
+    Top = 55
+    Width = 66
+    BorderSpacing.Top = 8
+    MaxValue = 65535
+    OnChange = seBChange
+    TabOrder = 3
+  end
+  object lbB: TLabel
+    AnchorSideLeft.Control = lbA
+    AnchorSideTop.Control = seB
+    AnchorSideTop.Side = asrCenter
+    Left = 280
+    Height = 16
+    Top = 58
+    Width = 11
+    Caption = 'B:'
+    FocusControl = seB
+    ParentColor = False
+  end
+  object seC: TSpinEdit
+    Tag = 3
+    AnchorSideLeft.Control = seB
+    AnchorSideTop.Control = seB
+    AnchorSideTop.Side = asrBottom
+    Left = 312
+    Height = 23
+    Top = 86
+    Width = 66
+    BorderSpacing.Top = 8
+    MaxValue = 65535
+    OnChange = seCChange
+    TabOrder = 4
+  end
+  object lbC: TLabel
+    AnchorSideLeft.Control = lbB
+    AnchorSideTop.Control = seC
+    AnchorSideTop.Side = asrCenter
+    Left = 280
+    Height = 16
+    Top = 89
+    Width = 12
+    Caption = 'C:'
+    FocusControl = seC
+    ParentColor = False
+  end
+  object seX: TSpinEdit
+    Tag = 4
+    AnchorSideLeft.Control = seC
+    AnchorSideTop.Control = seC
+    AnchorSideTop.Side = asrBottom
+    Left = 312
+    Height = 23
+    Top = 117
+    Width = 66
+    BorderSpacing.Top = 8
+    MaxValue = 65535
+    OnChange = seXChange
+    TabOrder = 5
+  end
+  object lbX: TLabel
+    AnchorSideLeft.Control = lbC
+    AnchorSideTop.Control = seX
+    AnchorSideTop.Side = asrCenter
+    Left = 280
+    Height = 16
+    Top = 120
+    Width = 11
+    Caption = 'X:'
+    FocusControl = seX
+    ParentColor = False
+  end
+  object seY: TSpinEdit
+    Tag = 5
+    AnchorSideLeft.Control = seX
+    AnchorSideTop.Control = seX
+    AnchorSideTop.Side = asrBottom
+    Left = 312
+    Height = 23
+    Top = 148
+    Width = 66
+    BorderSpacing.Top = 8
+    MaxValue = 65535
+    OnChange = seYChange
+    TabOrder = 6
+  end
+  object lbY: TLabel
+    AnchorSideLeft.Control = lbX
+    AnchorSideTop.Control = seY
+    AnchorSideTop.Side = asrCenter
+    Left = 280
+    Height = 16
+    Top = 151
+    Width = 11
+    Caption = 'Y:'
+    FocusControl = seY
+    ParentColor = False
+  end
+  object seZ: TSpinEdit
+    Tag = 6
+    AnchorSideLeft.Control = seY
+    AnchorSideTop.Control = seY
+    AnchorSideTop.Side = asrBottom
+    Left = 312
+    Height = 23
+    Top = 179
+    Width = 66
+    BorderSpacing.Top = 8
+    MaxValue = 65535
+    OnChange = seZChange
+    TabOrder = 7
+  end
+  object lbZ: TLabel
+    AnchorSideLeft.Control = lbY
+    AnchorSideTop.Control = seZ
+    AnchorSideTop.Side = asrCenter
+    Left = 280
+    Height = 16
+    Top = 182
+    Width = 11
+    Caption = 'Z:'
+    FocusControl = seZ
+    ParentColor = False
+  end
+  object seI: TSpinEdit
+    Tag = 7
+    AnchorSideLeft.Control = seZ
+    AnchorSideTop.Control = seZ
+    AnchorSideTop.Side = asrBottom
+    Left = 312
+    Height = 23
+    Top = 210
+    Width = 66
+    BorderSpacing.Top = 8
+    MaxValue = 65535
+    OnChange = seIChange
+    TabOrder = 8
+  end
+  object lbI: TLabel
+    AnchorSideLeft.Control = lbZ
+    AnchorSideTop.Control = seI
+    AnchorSideTop.Side = asrCenter
+    Left = 280
+    Height = 16
+    Top = 213
+    Width = 7
+    Caption = 'I:'
+    FocusControl = seI
+    ParentColor = False
+  end
+  object lbCPUState: TLabel
+    AnchorSideLeft.Control = seA
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = Owner
+    Left = 386
+    Height = 16
+    Top = 8
+    Width = 56
+    BorderSpacing.Left = 8
+    BorderSpacing.Top = 8
+    Caption = '&CPU State:'
+    FocusControl = sePC
+    ParentColor = False
+  end
+  object sePC: TSpinEdit
+    Tag = 9
+    AnchorSideLeft.Control = lbCPUState
+    AnchorSideTop.Control = lbCPUState
+    AnchorSideTop.Side = asrBottom
+    Left = 426
+    Height = 23
+    Top = 24
+    Width = 66
+    BorderSpacing.Left = 40
+    MaxValue = 65535
+    OnChange = sePCChange
+    TabOrder = 10
+  end
+  object lbPC: TLabel
+    AnchorSideLeft.Control = lbCPUState
+    AnchorSideTop.Control = sePC
+    AnchorSideTop.Side = asrCenter
+    Left = 402
+    Height = 16
+    Top = 27
+    Width = 19
+    BorderSpacing.Left = 16
+    Caption = 'PC:'
+    FocusControl = sePC
+    ParentColor = False
+  end
+  object seSP: TSpinEdit
+    Tag = 10
+    AnchorSideLeft.Control = sePC
+    AnchorSideTop.Control = sePC
+    AnchorSideTop.Side = asrBottom
+    Left = 426
+    Height = 23
+    Top = 55
+    Width = 66
+    BorderSpacing.Top = 8
+    MaxValue = 65535
+    OnChange = seSPChange
+    TabOrder = 11
+  end
+  object lbSP: TLabel
+    AnchorSideLeft.Control = lbPC
+    AnchorSideTop.Control = seSP
+    AnchorSideTop.Side = asrCenter
+    Left = 402
+    Height = 16
+    Top = 58
+    Width = 17
+    Caption = 'SP:'
+    FocusControl = seSP
+    ParentColor = False
+  end
+  object seO: TSpinEdit
+    Tag = 11
+    AnchorSideLeft.Control = seSP
+    Left = 426
+    Height = 23
+    Top = 88
+    Width = 66
+    MaxValue = 65535
+    OnChange = seOChange
+    TabOrder = 12
+  end
+  object lbO: TLabel
+    AnchorSideLeft.Control = lbSP
+    AnchorSideTop.Control = seO
+    AnchorSideTop.Side = asrCenter
+    Left = 402
+    Height = 16
+    Top = 91
+    Width = 13
+    Caption = 'O:'
+    FocusControl = seO
+    ParentColor = False
+  end
+  object lbAssembly: TLabel
+    AnchorSideLeft.Control = sePC
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = Owner
+    Left = 500
+    Height = 16
+    Top = 8
+    Width = 55
+    BorderSpacing.Left = 8
+    BorderSpacing.Top = 8
+    Caption = '&Assembly:'
+    ParentColor = False
+  end
+  object seJ: TSpinEdit
+    Tag = 8
+    AnchorSideLeft.Control = seI
+    AnchorSideTop.Control = seI
+    AnchorSideTop.Side = asrBottom
+    Left = 312
+    Height = 23
+    Top = 241
+    Width = 66
+    BorderSpacing.Top = 8
+    MaxValue = 65535
+    OnChange = seJChange
+    TabOrder = 9
+  end
+  object lbJ: TLabel
+    AnchorSideLeft.Control = lbI
+    AnchorSideTop.Control = seJ
+    AnchorSideTop.Side = asrCenter
+    Left = 280
+    Height = 16
+    Top = 244
+    Width = 8
+    Caption = 'J:'
+    FocusControl = seJ
+    ParentColor = False
+  end
+  object cbRunning: TCheckBox
+    AnchorSideLeft.Control = lbCPUState
+    AnchorSideTop.Control = seO
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = seO
+    AnchorSideRight.Side = asrBottom
+    Left = 386
+    Height = 19
+    Top = 119
+    Width = 106
+    Anchors = [akTop, akLeft, akRight]
+    BorderSpacing.Top = 8
+    Caption = 'Ru&nning'
+    TabOrder = 13
+  end
+  object cbFollow: TCheckBox
+    AnchorSideLeft.Control = cbRunning
+    AnchorSideTop.Control = cbRunning
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbRunning
+    AnchorSideRight.Side = asrBottom
+    Left = 386
+    Height = 19
+    Top = 138
+    Width = 106
+    Anchors = [akTop, akLeft, akRight]
+    Caption = '&Follow'
+    Checked = True
+    State = cbChecked
+    TabOrder = 14
+  end
+  object cbCycleExact: TCheckBox
+    AnchorSideLeft.Control = cbFollow
+    AnchorSideTop.Control = cbFollow
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = cbFollow
+    AnchorSideRight.Side = asrBottom
+    Left = 386
+    Height = 19
+    Top = 157
+    Width = 106
+    Anchors = [akTop, akLeft, akRight]
+    Caption = '&Cycle Exact'
+    Checked = True
+    OnChange = cbCycleExactChange
+    State = cbChecked
+    TabOrder = 15
+  end
+  object btReset: TButton
+    AnchorSideLeft.Control = btAssemble
+    AnchorSideTop.Control = seZ
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = btAssemble
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = btAssemble
+    Left = 386
+    Height = 25
+    Top = 178
+    Width = 106
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    BorderSpacing.Bottom = 8
+    Caption = 'Re&set'
+    OnClick = btResetClick
+    TabOrder = 16
+  end
+  object btAssemble: TButton
+    AnchorSideLeft.Control = cbCycleExact
+    AnchorSideTop.Control = seI
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = cbCycleExact
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = seJ
+    AnchorSideBottom.Side = asrBottom
+    Left = 386
+    Height = 25
+    Top = 209
+    Width = 106
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    Caption = 'Assemble (F9)'
+    OnClick = btAssembleClick
+    TabOrder = 17
+  end
+  object lbMessages: TLabel
+    AnchorSideLeft.Control = lbMemoryDump
+    AnchorSideTop.Control = lbMemoryDump
+    AnchorSideTop.Side = asrBottom
+    AnchorSideBottom.Control = mMessages
+    Left = 8
+    Height = 16
+    Top = 388
+    Width = 55
+    Anchors = [akLeft, akBottom]
+    Caption = '&Messages:'
+    FocusControl = mMessages
+    ParentColor = False
+  end
+  object lbMemoryDump: TListBox
+    AnchorSideLeft.Control = lbMemoryDumpLabel
+    AnchorSideTop.Control = lbMemoryDumpLabel
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = lbDisassembly
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = lbMessages
+    Left = 8
+    Height = 184
+    Top = 204
+    Width = 256
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    ItemHeight = 0
+    TabOrder = 1
+  end
+  object lbMemoryDumpLabel: TLabel
+    AnchorSideLeft.Control = lbDisassembly
+    AnchorSideTop.Control = lbDisassembly
+    AnchorSideTop.Side = asrBottom
+    Left = 8
+    Height = 16
+    Top = 188
+    Width = 85
+    Caption = 'Memory &Dump:'
+    FocusControl = lbMemoryDump
+    ParentColor = False
+  end
+  object mMessages: TMemo
+    AnchorSideLeft.Control = lbMessages
+    AnchorSideTop.Control = lbMessages
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 8
+    Height = 119
+    Top = 404
+    Width = 904
+    Anchors = [akLeft, akRight, akBottom]
+    BorderSpacing.Right = 8
+    BorderSpacing.Bottom = 8
+    Constraints.MinHeight = 81
+    Font.Pitch = fpFixed
+    ParentFont = False
+    ReadOnly = True
+    ScrollBars = ssAutoBoth
+    TabOrder = 19
+  end
+  object btSingleStep: TButton
+    AnchorSideLeft.Control = btAssemble
+    AnchorSideTop.Control = seJ
+    AnchorSideTop.Side = asrCenter
+    AnchorSideRight.Control = btAssemble
+    AnchorSideRight.Side = asrBottom
+    Left = 386
+    Height = 25
+    Top = 240
+    Width = 106
+    Anchors = [akTop, akLeft, akRight]
+    AutoSize = True
+    BorderSpacing.Top = 8
+    Caption = 'Single Step (F7)'
+    OnClick = btSingleStepClick
+    TabOrder = 18
+  end
+  object lbNextInstructionState: TLabel
+    AnchorSideLeft.Control = lbDisassembly
+    AnchorSideLeft.Side = asrBottom
+    AnchorSideTop.Control = seJ
+    AnchorSideTop.Side = asrBottom
+    Left = 272
+    Height = 16
+    Top = 272
+    Width = 196
+    BorderSpacing.Left = 8
+    BorderSpacing.Top = 8
+    Caption = 'The next instruction will  be executed'
+    ParentColor = False
+  end
+  object lbLastCycles: TLabel
+    AnchorSideLeft.Control = lbNextInstructionState
+    AnchorSideTop.Control = lbNextInstructionState
+    AnchorSideTop.Side = asrBottom
+    Left = 272
+    Height = 16
+    Top = 288
+    Width = 129
+    Caption = 'Last instruction cycles: 0'
+    ParentColor = False
+  end
+  inline mCode: TSynEdit
+    AnchorSideLeft.Control = lbAssembly
+    AnchorSideTop.Control = lbAssembly
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = Owner
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = lbMemoryDump
+    AnchorSideBottom.Side = asrBottom
+    Left = 500
+    Height = 364
+    Top = 24
+    Width = 412
+    BorderSpacing.Right = 8
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    Font.Height = -13
+    Font.Name = 'Courier New'
+    Font.Pitch = fpFixed
+    Font.Quality = fqNonAntialiased
+    ParentColor = False
+    ParentFont = False
+    TabOrder = 20
+    Gutter.Width = 57
+    Gutter.MouseActions = <    
+      item
+        Shift = []
+        ShiftMask = []
+        Button = mbLeft
+        ClickCount = ccAny
+        ClickDir = cdDown
+        Command = 13
+        MoveCaret = False
+        Option = 0
+        Priority = 0
+      end    
+      item
+        Shift = []
+        ShiftMask = []
+        Button = mbRight
+        ClickCount = ccSingle
+        ClickDir = cdUp
+        Command = 12
+        MoveCaret = False
+        Option = 0
+        Priority = 0
+      end>
+    RightGutter.Width = 0
+    RightGutter.MouseActions = <    
+      item
+        Shift = []
+        ShiftMask = []
+        Button = mbLeft
+        ClickCount = ccAny
+        ClickDir = cdDown
+        Command = 13
+        MoveCaret = False
+        Option = 0
+        Priority = 0
+      end    
+      item
+        Shift = []
+        ShiftMask = []
+        Button = mbRight
+        ClickCount = ccSingle
+        ClickDir = cdUp
+        Command = 12
+        MoveCaret = False
+        Option = 0
+        Priority = 0
+      end>
+    Highlighter = sasAssembly
+    Keystrokes = <    
+      item
+        Command = ecUp
+        ShortCut = 38
+      end    
+      item
+        Command = ecSelUp
+        ShortCut = 8230
+      end    
+      item
+        Command = ecScrollUp
+        ShortCut = 16422
+      end    
+      item
+        Command = ecDown
+        ShortCut = 40
+      end    
+      item
+        Command = ecSelDown
+        ShortCut = 8232
+      end    
+      item
+        Command = ecScrollDown
+        ShortCut = 16424
+      end    
+      item
+        Command = ecLeft
+        ShortCut = 37
+      end    
+      item
+        Command = ecSelLeft
+        ShortCut = 8229
+      end    
+      item
+        Command = ecWordLeft
+        ShortCut = 16421
+      end    
+      item
+        Command = ecSelWordLeft
+        ShortCut = 24613
+      end    
+      item
+        Command = ecRight
+        ShortCut = 39
+      end    
+      item
+        Command = ecSelRight
+        ShortCut = 8231
+      end    
+      item
+        Command = ecWordRight
+        ShortCut = 16423
+      end    
+      item
+        Command = ecSelWordRight
+        ShortCut = 24615
+      end    
+      item
+        Command = ecPageDown
+        ShortCut = 34
+      end    
+      item
+        Command = ecSelPageDown
+        ShortCut = 8226
+      end    
+      item
+        Command = ecPageBottom
+        ShortCut = 16418
+      end    
+      item
+        Command = ecSelPageBottom
+        ShortCut = 24610
+      end    
+      item
+        Command = ecPageUp
+        ShortCut = 33
+      end    
+      item
+        Command = ecSelPageUp
+        ShortCut = 8225
+      end    
+      item
+        Command = ecPageTop
+        ShortCut = 16417
+      end    
+      item
+        Command = ecSelPageTop
+        ShortCut = 24609
+      end    
+      item
+        Command = ecLineStart
+        ShortCut = 36
+      end    
+      item
+        Command = ecSelLineStart
+        ShortCut = 8228
+      end    
+      item
+        Command = ecEditorTop
+        ShortCut = 16420
+      end    
+      item
+        Command = ecSelEditorTop
+        ShortCut = 24612
+      end    
+      item
+        Command = ecLineEnd
+        ShortCut = 35
+      end    
+      item
+        Command = ecSelLineEnd
+        ShortCut = 8227
+      end    
+      item
+        Command = ecEditorBottom
+        ShortCut = 16419
+      end    
+      item
+        Command = ecSelEditorBottom
+        ShortCut = 24611
+      end    
+      item
+        Command = ecToggleMode
+        ShortCut = 45
+      end    
+      item
+        Command = ecCopy
+        ShortCut = 16429
+      end    
+      item
+        Command = ecPaste
+        ShortCut = 8237
+      end    
+      item
+        Command = ecDeleteChar
+        ShortCut = 46
+      end    
+      item
+        Command = ecCut
+        ShortCut = 8238
+      end    
+      item
+        Command = ecDeleteLastChar
+        ShortCut = 8
+      end    
+      item
+        Command = ecDeleteLastChar
+        ShortCut = 8200
+      end    
+      item
+        Command = ecDeleteLastWord
+        ShortCut = 16392
+      end    
+      item
+        Command = ecUndo
+        ShortCut = 32776
+      end    
+      item
+        Command = ecRedo
+        ShortCut = 40968
+      end    
+      item
+        Command = ecLineBreak
+        ShortCut = 13
+      end    
+      item
+        Command = ecSelectAll
+        ShortCut = 16449
+      end    
+      item
+        Command = ecCopy
+        ShortCut = 16451
+      end    
+      item
+        Command = ecBlockIndent
+        ShortCut = 24649
+      end    
+      item
+        Command = ecLineBreak
+        ShortCut = 16461
+      end    
+      item
+        Command = ecInsertLine
+        ShortCut = 16462
+      end    
+      item
+        Command = ecDeleteWord
+        ShortCut = 16468
+      end    
+      item
+        Command = ecBlockUnindent
+        ShortCut = 24661
+      end    
+      item
+        Command = ecPaste
+        ShortCut = 16470
+      end    
+      item
+        Command = ecCut
+        ShortCut = 16472
+      end    
+      item
+        Command = ecDeleteLine
+        ShortCut = 16473
+      end    
+      item
+        Command = ecDeleteEOL
+        ShortCut = 24665
+      end    
+      item
+        Command = ecUndo
+        ShortCut = 16474
+      end    
+      item
+        Command = ecRedo
+        ShortCut = 24666
+      end    
+      item
+        Command = ecGotoMarker0
+        ShortCut = 16432
+      end    
+      item
+        Command = ecGotoMarker1
+        ShortCut = 16433
+      end    
+      item
+        Command = ecGotoMarker2
+        ShortCut = 16434
+      end    
+      item
+        Command = ecGotoMarker3
+        ShortCut = 16435
+      end    
+      item
+        Command = ecGotoMarker4
+        ShortCut = 16436
+      end    
+      item
+        Command = ecGotoMarker5
+        ShortCut = 16437
+      end    
+      item
+        Command = ecGotoMarker6
+        ShortCut = 16438
+      end    
+      item
+        Command = ecGotoMarker7
+        ShortCut = 16439
+      end    
+      item
+        Command = ecGotoMarker8
+        ShortCut = 16440
+      end    
+      item
+        Command = ecGotoMarker9
+        ShortCut = 16441
+      end    
+      item
+        Command = ecSetMarker0
+        ShortCut = 24624
+      end    
+      item
+        Command = ecSetMarker1
+        ShortCut = 24625
+      end    
+      item
+        Command = ecSetMarker2
+        ShortCut = 24626
+      end    
+      item
+        Command = ecSetMarker3
+        ShortCut = 24627
+      end    
+      item
+        Command = ecSetMarker4
+        ShortCut = 24628
+      end    
+      item
+        Command = ecSetMarker5
+        ShortCut = 24629
+      end    
+      item
+        Command = ecSetMarker6
+        ShortCut = 24630
+      end    
+      item
+        Command = ecSetMarker7
+        ShortCut = 24631
+      end    
+      item
+        Command = ecSetMarker8
+        ShortCut = 24632
+      end    
+      item
+        Command = ecSetMarker9
+        ShortCut = 24633
+      end    
+      item
+        Command = EcFoldLevel1
+        ShortCut = 41009
+      end    
+      item
+        Command = EcFoldLevel2
+        ShortCut = 41010
+      end    
+      item
+        Command = EcFoldLevel1
+        ShortCut = 41011
+      end    
+      item
+        Command = EcFoldLevel1
+        ShortCut = 41012
+      end    
+      item
+        Command = EcFoldLevel1
+        ShortCut = 41013
+      end    
+      item
+        Command = EcFoldLevel6
+        ShortCut = 41014
+      end    
+      item
+        Command = EcFoldLevel7
+        ShortCut = 41015
+      end    
+      item
+        Command = EcFoldLevel8
+        ShortCut = 41016
+      end    
+      item
+        Command = EcFoldLevel9
+        ShortCut = 41017
+      end    
+      item
+        Command = EcFoldLevel0
+        ShortCut = 41008
+      end    
+      item
+        Command = EcFoldCurrent
+        ShortCut = 41005
+      end    
+      item
+        Command = EcUnFoldCurrent
+        ShortCut = 41003
+      end    
+      item
+        Command = EcToggleMarkupWord
+        ShortCut = 32845
+      end    
+      item
+        Command = ecNormalSelect
+        ShortCut = 24654
+      end    
+      item
+        Command = ecColumnSelect
+        ShortCut = 24643
+      end    
+      item
+        Command = ecLineSelect
+        ShortCut = 24652
+      end    
+      item
+        Command = ecTab
+        ShortCut = 9
+      end    
+      item
+        Command = ecShiftTab
+        ShortCut = 8201
+      end    
+      item
+        Command = ecMatchBracket
+        ShortCut = 24642
+      end    
+      item
+        Command = ecColSelUp
+        ShortCut = 40998
+      end    
+      item
+        Command = ecColSelDown
+        ShortCut = 41000
+      end    
+      item
+        Command = ecColSelLeft
+        ShortCut = 40997
+      end    
+      item
+        Command = ecColSelRight
+        ShortCut = 40999
+      end    
+      item
+        Command = ecColSelPageDown
+        ShortCut = 40994
+      end    
+      item
+        Command = ecColSelPageBottom
+        ShortCut = 57378
+      end    
+      item
+        Command = ecColSelPageUp
+        ShortCut = 40993
+      end    
+      item
+        Command = ecColSelPageTop
+        ShortCut = 57377
+      end    
+      item
+        Command = ecColSelLineStart
+        ShortCut = 40996
+      end    
+      item
+        Command = ecColSelLineEnd
+        ShortCut = 40995
+      end    
+      item
+        Command = ecColSelEditorTop
+        ShortCut = 57380
+      end    
+      item
+        Command = ecColSelEditorBottom
+        ShortCut = 57379
+      end>
+    MouseActions = <    
+      item
+        Shift = []
+        ShiftMask = [ssShift, ssAlt]
+        Button = mbLeft
+        ClickCount = ccSingle
+        ClickDir = cdDown
+        Command = 1
+        MoveCaret = True
+        Option = 0
+        Priority = 0
+      end    
+      item
+        Shift = [ssShift]
+        ShiftMask = [ssShift, ssAlt]
+        Button = mbLeft
+        ClickCount = ccSingle
+        ClickDir = cdDown
+        Command = 1
+        MoveCaret = True
+        Option = 1
+        Priority = 0
+      end    
+      item
+        Shift = [ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        Button = mbLeft
+        ClickCount = ccSingle
+        ClickDir = cdDown
+        Command = 3
+        MoveCaret = True
+        Option = 0
+        Priority = 0
+      end    
+      item
+        Shift = [ssShift, ssAlt]
+        ShiftMask = [ssShift, ssAlt]
+        Button = mbLeft
+        ClickCount = ccSingle
+        ClickDir = cdDown
+        Command = 3
+        MoveCaret = True
+        Option = 1
+        Priority = 0
+      end    
+      item
+        Shift = []
+        ShiftMask = []
+        Button = mbRight
+        ClickCount = ccSingle
+        ClickDir = cdUp
+        Command = 12
+        MoveCaret = False
+        Option = 0
+        Priority = 0
+      end    
+      item
+        Shift = []
+        ShiftMask = []
+        Button = mbLeft
+        ClickCount = ccDouble
+        ClickDir = cdDown
+        Command = 6
+        MoveCaret = True
+        Option = 0
+        Priority = 0
+      end    
+      item
+        Shift = []
+        ShiftMask = []
+        Button = mbLeft
+        ClickCount = ccTriple
+        ClickDir = cdDown
+        Command = 7
+        MoveCaret = True
+        Option = 0
+        Priority = 0
+      end    
+      item
+        Shift = []
+        ShiftMask = []
+        Button = mbLeft
+        ClickCount = ccQuad
+        ClickDir = cdDown
+        Command = 8
+        MoveCaret = True
+        Option = 0
+        Priority = 0
+      end    
+      item
+        Shift = []
+        ShiftMask = []
+        Button = mbMiddle
+        ClickCount = ccSingle
+        ClickDir = cdDown
+        Command = 10
+        MoveCaret = True
+        Option = 0
+        Priority = 0
+      end    
+      item
+        Shift = [ssCtrl]
+        ShiftMask = [ssShift, ssAlt, ssCtrl]
+        Button = mbLeft
+        ClickCount = ccSingle
+        ClickDir = cdUp
+        Command = 11
+        MoveCaret = False
+        Option = 0
+        Priority = 0
+      end>
+    MouseSelActions = <    
+      item
+        Shift = []
+        ShiftMask = []
+        Button = mbLeft
+        ClickCount = ccSingle
+        ClickDir = cdDown
+        Command = 9
+        MoveCaret = False
+        Option = 0
+        Priority = 0
+      end>
+    Lines.Strings = (
+      '; Try some basic stuff'
+      '        SET A, 0x30'
+      '        SET [0x1000], 0x20'
+      '        SUB A, [0x1000]'
+      '        IFN A, 0x10'
+      '        SET PC, Crash'
+      ''
+      '; Do a loopy thing'
+      '        SET I, 10'
+      '        SET A, 0x2000'
+      ':Loop   SET [0x2000 + I], [A]'
+      '        SUB I, 1'
+      '        IFN I, 0'
+      '        SET PC, Loop'
+      ''
+      '; Call a subroutine'
+      '        SET X, 0x4'
+      '        JSR TestSub'
+      '        SET PC, Crash'
+      ''
+      ':TestSub'
+      '        SHL X, 4'
+      '        SET PC, POP'
+      ''
+      '; Hang forever.'
+      '; X should now be 0x40 if everything'
+      '; went right.'
+      ':Crash  SET PC, Crash'
+    )
+    BracketHighlightStyle = sbhsBoth
+    inline SynLeftGutterPartList1: TSynGutterPartList
+      object SynGutterMarks1: TSynGutterMarks
+        Width = 24
+      end
+      object SynGutterLineNumber1: TSynGutterLineNumber
+        Width = 17
+        MouseActions = <>
+        MarkupInfo.Background = clBtnFace
+        MarkupInfo.Foreground = clNone
+        DigitCount = 2
+        ShowOnlyLineNumbersMultiplesOf = 1
+        ZeroStart = False
+        LeadingZeros = False
+      end
+      object SynGutterChanges1: TSynGutterChanges
+        Width = 4
+        ModifiedColor = 59900
+        SavedColor = clGreen
+      end
+      object SynGutterSeparator1: TSynGutterSeparator
+        Width = 2
+      end
+      object SynGutterCodeFolding1: TSynGutterCodeFolding
+        MouseActions = <        
+          item
+            Shift = []
+            ShiftMask = []
+            Button = mbRight
+            ClickCount = ccSingle
+            ClickDir = cdUp
+            Command = 16
+            MoveCaret = False
+            Option = 0
+            Priority = 0
+          end        
+          item
+            Shift = []
+            ShiftMask = [ssShift]
+            Button = mbMiddle
+            ClickCount = ccAny
+            ClickDir = cdDown
+            Command = 14
+            MoveCaret = False
+            Option = 0
+            Priority = 0
+          end        
+          item
+            Shift = [ssShift]
+            ShiftMask = [ssShift]
+            Button = mbMiddle
+            ClickCount = ccAny
+            ClickDir = cdDown
+            Command = 14
+            MoveCaret = False
+            Option = 1
+            Priority = 0
+          end        
+          item
+            Shift = []
+            ShiftMask = []
+            Button = mbLeft
+            ClickCount = ccAny
+            ClickDir = cdDown
+            Command = 0
+            MoveCaret = False
+            Option = 0
+            Priority = 0
+          end>
+        MarkupInfo.Background = clNone
+        MarkupInfo.Foreground = clGray
+        MouseActionsExpanded = <        
+          item
+            Shift = []
+            ShiftMask = []
+            Button = mbLeft
+            ClickCount = ccAny
+            ClickDir = cdDown
+            Command = 14
+            MoveCaret = False
+            Option = 0
+            Priority = 0
+          end>
+        MouseActionsCollapsed = <        
+          item
+            Shift = [ssCtrl]
+            ShiftMask = [ssCtrl]
+            Button = mbLeft
+            ClickCount = ccAny
+            ClickDir = cdDown
+            Command = 15
+            MoveCaret = False
+            Option = 0
+            Priority = 0
+          end        
+          item
+            Shift = []
+            ShiftMask = [ssCtrl]
+            Button = mbLeft
+            ClickCount = ccAny
+            ClickDir = cdDown
+            Command = 15
+            MoveCaret = False
+            Option = 1
+            Priority = 0
+          end>
+      end
+    end
+  end
+  object ApplicationProperties1: TApplicationProperties
+    ShowButtonGlyphs = sbgSystem
+    Title = 'DCPU-16 Studio'
+    OnIdle = ApplicationProperties1Idle
+    left = 552
+    top = 40
+  end
+  object MainMenu1: TMainMenu
+    left = 552
+    top = 129
+    object mFile: TMenuItem
+      Caption = '&File'
+      object mFileNew: TMenuItem
+        Caption = '&New'
+        OnClick = mFileNewClick
+      end
+      object mFileOpen: TMenuItem
+        Caption = '&Open...'
+        OnClick = mFileOpenClick
+      end
+      object mFileSave: TMenuItem
+        Caption = '&Save'
+        ShortCut = 16467
+        OnClick = mFileSaveClick
+      end
+      object mFileSaveAs: TMenuItem
+        Caption = 'Save &as...'
+        OnClick = mFileSaveAsClick
+      end
+      object MenuItem5: TMenuItem
+        Caption = '-'
+      end
+      object mFileQuit: TMenuItem
+        Caption = '&Quit'
+        OnClick = mFileQuitClick
+      end
+    end
+    object mCPU: TMenuItem
+      Caption = '&CPU'
+      object mCPUReset: TMenuItem
+        Caption = '&Reset'
+        ShortCut = 16466
+        OnClick = mCPUResetClick
+      end
+      object mCPUSingleStep: TMenuItem
+        Caption = '&Single Step'
+        ShortCut = 118
+        OnClick = mCPUSingleStepClick
+      end
+      object mCPUBar1: TMenuItem
+        Caption = '-'
+      end
+      object mCPUSaveProgram: TMenuItem
+        Caption = '&Save Program...'
+        OnClick = mCPUSaveProgramClick
+      end
+      object mCPULoadProgram: TMenuItem
+        Caption = '&Load Program...'
+        OnClick = mCPULoadProgramClick
+      end
+    end
+    object mAssembly: TMenuItem
+      Caption = '&Assembly'
+      object mAssemblyAssemble: TMenuItem
+        Caption = '&Assemble'
+        ShortCut = 120
+        OnClick = mAssemblyAssembleClick
+      end
+    end
+    object mHelp: TMenuItem
+      Caption = '&Help'
+      object mHelpContents: TMenuItem
+        Caption = '&Contents...'
+        ShortCut = 112
+        OnClick = mHelpContentsClick
+      end
+      object mHelpBar1: TMenuItem
+        Caption = '-'
+      end
+      object mHelpAbout: TMenuItem
+        Caption = '&About...'
+        OnClick = mHelpAboutClick
+      end
+    end
+  end
+  object sasAssembly: TSynAnySyn
+    Enabled = False
+    CommentAttri.Foreground = clGreen
+    CommentAttri.FrameEdges = sfeAround
+    CommentAttri.Style = []
+    Comments = [csAsmStyle]
+    DetectPreprocessor = False
+    IdentifierAttri.FrameEdges = sfeAround
+    IdentifierChars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ_abcdefghijklmnopqrstuvwxyz'
+    KeyAttri.Foreground = clNavy
+    KeyAttri.FrameEdges = sfeAround
+    KeyAttri.Style = []
+    ConstantAttri.Foreground = clTeal
+    ConstantAttri.FrameEdges = sfeAround
+    ConstantAttri.Style = []
+    ObjectAttri.FrameEdges = sfeAround
+    EntityAttri.FrameEdges = sfeAround
+    VariableAttri.FrameEdges = sfeAround
+    DotAttri.FrameEdges = sfeAround
+    KeyWords.Strings = (
+      'ADD'
+      'AND'
+      'BOR'
+      'DATA'
+      'DIV'
+      'IFB'
+      'IFE'
+      'IFG'
+      'IFN'
+      'JSR'
+      'MOD'
+      'MUL'
+      'RESERVE'
+      'SET'
+      'SHL'
+      'SHR'
+      'SUB'
+      'XOR'
+    )
+    Constants.Strings = (
+      'A'
+      'B'
+      'C'
+      'I'
+      'J'
+      'O'
+      'PC'
+      'PEEK'
+      'POP'
+      'PUSH'
+      'SP'
+      'X'
+      'Y'
+      'Z'
+    )
+    NumberAttri.Foreground = clOlive
+    NumberAttri.FrameEdges = sfeAround
+    PreprocessorAttri.FrameEdges = sfeAround
+    SpaceAttri.FrameEdges = sfeAround
+    StringAttri.FrameEdges = sfeAround
+    SymbolAttri.Foreground = clMaroon
+    SymbolAttri.FrameEdges = sfeAround
+    Markup = False
+    Entity = False
+    DollarVariables = False
+    ActiveDot = False
+    left = 736
+    top = 129
+  end
+  object LazHelp1: TLazHelp
+    Page = 'main'
+    Code = '\page[main]{'#13#10'\title[Welcome]'#13#10'\h[1]{DCPU-16 Studio Help}'#13#10'\p{Welcome to \b{DCPU-16 Studio}, a development tool for the virtual computers in Mojang''s upcoming 0x10^c game. DCPU-16 Studio provides an assembler, disassembler, emulator and debugger for DCPU-16 programs in a graphical interactive interface.}'#13#10'\p{Select a topic from below:}'#13#10'\ul{'#13#10'\li{\a[assembler]{The Assembler}}'#13#10'\li{\a[debugger]{The Debugger}}'#13#10'\li{\a[dcpu16]{DCPU-16 Specification}}'#13#10'\li{\a[dcpu16ins]{DCPU-16 Instructions}}}}'#13#10#13#10'\page[assembler]{'#13#10'\title[The DCPU-16 Studio Assembler]'#13#10'\h[1]{The Assembler}'#13#10'\p{The \b{DCPU-16 Studio Assembler} follows closely the style used by the official DCPU-16 specs with only few differences. In the assembler, labels and instructions can be placed anywhere on a line and multiple instructions can be placed in the same line. Like in the official style, the labels begin with a colon. Hexadecimals must be prefaced with either 0x or $ (the latter is a DCPU-16 Studio extension). Neither the code nor the symbols are case sensitive.}'#13#10'\p{The \b{RESERVE x} pseudoinstruction can be used to reserve x words in the program. The \b{DATA d1, d2, d3, ...} pseudoinstruction can be used to put words directly in the program code.}'#13#10'\p{Comments can being with either the semicolon symbol or the C++-like double slash (this is a DCPU-16 Studio extension).}'#13#10'\p{DCPU-16 Studio does not generate the same exactly bytecodes as the official assembler. For example the test program provided by the official specs is shorter a few bytes.}}'#13#10#13#10'\page[debugger]{'#13#10'\title[The DCPU-16 Studio Debugger]'#13#10'\h[1]{The Debugger}'#13#10'\p{The debugger should be straightforward: load any program and you can run it or step through it. To run in full speed check the \b{Running} checkbox. The emulator can be either cycle exact or always a single instruction per cycle based on the state of the \b{Cycle Exact} checkbox. If the \b{Follow} checkbox is checked, the debugger will show the instruction to be executed next and the last changed value in memory. The emulator also shows the cycles of the last instruction and the current execution flag.}'#13#10'\p{You can modify the program''s registers while the program is running or paused.}}'#13#10#13#10'\page[dcpu16]{'#13#10'\title[The DCPU-16 Specifications]'#13#10'\h[1]{The DCPU-16 Specs}'#13#10'\p{DCPU-16 is a custom virtual 16bit CPU. In DCPU-16 the only accessible unit of data is 16bit words (no individual bytes are accessible). The CPU has 11 registers, 10 of whom can be used as general purpose registers although the CPU uses two of them for special purposes. The registers are named A, B, C, X, Y, Z, I, J, PC, SP and O. The PC register is the program counter, the SP is the stack pointer and the O is the overflow register.}'#13#10'\p{Unlike most CPUs, DCPU-16 does not have an accessible flag register (the O register can hold any value and be used like any other register), although there is a hidden flag that is used to skip the execution of instructions when tests are performed.}'#13#10'\p{Instructions are separated in Basic and Extended. Basic instructions take two parameters while Extended instructions take only one. The type of instruction and the nature of the parameter is encoded in the instruction word (the word pointed to at by the PC register) which can be followed by one or two additional words, based on the parameter.}'#13#10'\p{Basic instructions have the encoding BBBBBBAAAAAAOOOO where OOOO is the instruction opcode and AAAAAA and BBBBBB are the parameters. Extended instructions have the encoding AAAAAAOOOOOO0000 where OOOOOO is the instruction opcode and AAAAAA is the parameter to the instruction (the first four bits are set to zero).}'#13#10'\p{The parameters have the following encoding, based on their range (values inside brackets mean that the value is used to access the memory):}'#13#10'\ul{'#13#10'\li{\b{0x00-0x07} - register (A, B, C, X, Y, Z, I or J)}'#13#10'\li{\b{0x08-0x0F} - /[register/] (memory at the address stored in the register)}'#13#10'\li{\b{0x10-0x17} - /[offset + register/] (offset is stored after the instruction)}'#13#10'\li{\b{0x18} - POP (pop from the stack by using the value at the address stored in SP and increasing the value of SP). Note that this can be used in combination with \b{SET} to pop values from the stack and return from subroutines by storing the value popped to the \b{PC} register.}'#13#10'\li{\b{0x19} - PEEK (peek the value at the address stored in SP but do not modify SP)}'#13#10'\li{\b{0x1A} - PUSH (push to the stack by decreasing the value of SP and using the decreased value as the address to store the new value). Note that this assumes that the parameter is used as the destination for some operation). This can be used in combination with \b{SET} to push values to the stack.}'#13#10'\li{\b{0x1B} - the SP register''s value}'#13#10'\li{\b{0x1C} - the PC register''s value. This can be used to jump around the code and return from subroutines when used with \b{POP} above.}'#13#10'\li{\b{0x1D} - the O register''s value}'#13#10'\li{\b{0x1E} - /[address/] (the address is stored after the instruction)}'#13#10'\li{\b{0x1F} - literal (the literal is stored after the instruction)}'#13#10'\li{\b{0x20-0x3F} - literal 0x00-0x1F}}'#13#10'\p{For details see \b{http:////0x10c.com//doc//dcpu-16.txt}}'#13#10'}'#13#10#13#10'\page[dcpu16ins]{'#13#10'\title[The DCPU-16 Instruction Set]'#13#10'\h[1]{DCPU-16 Instructions}'#13#10'\p{The DCPU-16 instruction set is as follows:}'#13#10'\ul{'#13#10'\li{\b{SET a, b} - set a to b}'#13#10'\li{\b{ADD a, b} - set a to a + b, set O to 0x0001 if there is an overflow}'#13#10'\li{\b{SUB a, b} - set a to a - b, set O to 0xFFFF if there is an underflow}'#13#10'\li{\b{MUL a, b} - set a to a * b, set O to ((a * b) >> 16) & 0xFFFF}'#13#10'\li{\b{DIV a, b} - set a to a // b, set O to ((a << 16) // b) & 0xFFFF. If b is 0 then both a and O are set to 0.}'#13#10'\li{\b{MOD a, b} - set a to a % b. If b is 0 then a is set to 0.}'#13#10'\li{\b{SHL a, b} - set a to a << b, set O to ((a << b) >> 16) & 0xFFFF}'#13#10'\li{\b{SHR a, b} - set a to a >> b, set O to ((a << 16) >> b) & 0xFFFF}'#13#10'\li{\b{AND a, b} - set a to a & b}'#13#10'\li{\b{BOR a, b} - set a to a | b}'#13#10'\li{\b{XOR a, b} - set a to a ^ b}'#13#10'\li{\b{IFE a, b} - executes the next instruction only if a == b}'#13#10'\li{\b{IFN a, b} - executes the next instruction only if a != b}'#13#10'\li{\b{IFG a, b} - executes the next instruction only if a > b}'#13#10'\li{\b{IFB a, b} - executes the next instruction only if (a & b) != 0}'#13#10'\li{\b{JSR addr} - pushes the current PC to the stack and sets it to addr. Can be used to call subroutines}}'#13#10'\p{All word reads take one cycle (this includes instruction reads). The instructions ADD, SUB, MUL, SHR, JSR, IFE, IFN, IFG and IFB take an additional cycle (if the test fail for the last four, another extra cycle is used). The instructions DIV and MOD take two additional cycles.}'#13#10'}'#13#10
+    left = 568
+    top = 240
+  end
+  object StringListLazHelpProvider1: TStringListLazHelpProvider
+    LazHelp = LazHelp1
+    Code.Strings = (
+      '\page[main]{'
+      '\title[Welcome]'
+      '\h[1]{DCPU-16 Studio Help}'
+      '\p{Welcome to \b{DCPU-16 Studio}, a development tool for the virtual computers in Mojang''s upcoming 0x10^c game. DCPU-16 Studio provides an assembler, disassembler, emulator and debugger for DCPU-16 programs in a graphical interactive interface.}'
+      '\p{Select a topic from below:}'
+      '\ul{'
+      '\li{\a[assembler]{The Assembler}}'
+      '\li{\a[debugger]{The Debugger}}'
+      '\li{\a[dcpu16]{DCPU-16 Specification}}'
+      '\li{\a[dcpu16ins]{DCPU-16 Instructions}}}}'
+      ''
+      '\page[assembler]{'
+      '\title[The DCPU-16 Studio Assembler]'
+      '\h[1]{The Assembler}'
+      '\p{The \b{DCPU-16 Studio Assembler} follows closely the style used by the official DCPU-16 specs with only few differences. In the assembler, labels and instructions can be placed anywhere on a line and multiple instructions can be placed in the same line. Like in the official style, the labels begin with a colon. Hexadecimals must be prefaced with either 0x or $ (the latter is a DCPU-16 Studio extension). Neither the code nor the symbols are case sensitive.}'
+      '\p{The \b{RESERVE x} pseudoinstruction can be used to reserve x words in the program. The \b{DATA d1, d2, d3, ...} pseudoinstruction can be used to put words directly in the program code.}'
+      '\p{Comments can being with either the semicolon symbol or the C++-like double slash (this is a DCPU-16 Studio extension).}'
+      '\p{DCPU-16 Studio does not generate the same exactly bytecodes as the official assembler. For example the test program provided by the official specs is shorter a few bytes.}}'
+      ''
+      '\page[debugger]{'
+      '\title[The DCPU-16 Studio Debugger]'
+      '\h[1]{The Debugger}'
+      '\p{The debugger should be straightforward: load any program and you can run it or step through it. To run in full speed check the \b{Running} checkbox. The emulator can be either cycle exact or always a single instruction per cycle based on the state of the \b{Cycle Exact} checkbox. If the \b{Follow} checkbox is checked, the debugger will show the instruction to be executed next and the last changed value in memory. The emulator also shows the cycles of the last instruction and the current execution flag.}'
+      '\p{You can modify the program''s registers while the program is running or paused.}}'
+      ''
+      '\page[dcpu16]{'
+      '\title[The DCPU-16 Specifications]'
+      '\h[1]{The DCPU-16 Specs}'
+      '\p{DCPU-16 is a custom virtual 16bit CPU. In DCPU-16 the only accessible unit of data is 16bit words (no individual bytes are accessible). The CPU has 11 registers, 10 of whom can be used as general purpose registers although the CPU uses two of them for special purposes. The registers are named A, B, C, X, Y, Z, I, J, PC, SP and O. The PC register is the program counter, the SP is the stack pointer and the O is the overflow register.}'
+      '\p{Unlike most CPUs, DCPU-16 does not have an accessible flag register (the O register can hold any value and be used like any other register), although there is a hidden flag that is used to skip the execution of instructions when tests are performed.}'
+      '\p{Instructions are separated in Basic and Extended. Basic instructions take two parameters while Extended instructions take only one. The type of instruction and the nature of the parameter is encoded in the instruction word (the word pointed to at by the PC register) which can be followed by one or two additional words, based on the parameter.}'
+      '\p{Basic instructions have the encoding BBBBBBAAAAAAOOOO where OOOO is the instruction opcode and AAAAAA and BBBBBB are the parameters. Extended instructions have the encoding AAAAAAOOOOOO0000 where OOOOOO is the instruction opcode and AAAAAA is the parameter to the instruction (the first four bits are set to zero).}'
+      '\p{The parameters have the following encoding, based on their range (values inside brackets mean that the value is used to access the memory):}'
+      '\ul{'
+      '\li{\b{0x00-0x07} - register (A, B, C, X, Y, Z, I or J)}'
+      '\li{\b{0x08-0x0F} - /[register/] (memory at the address stored in the register)}'
+      '\li{\b{0x10-0x17} - /[offset + register/] (offset is stored after the instruction)}'
+      '\li{\b{0x18} - POP (pop from the stack by using the value at the address stored in SP and increasing the value of SP). Note that this can be used in combination with \b{SET} to pop values from the stack and return from subroutines by storing the value popped to the \b{PC} register.}'
+      '\li{\b{0x19} - PEEK (peek the value at the address stored in SP but do not modify SP)}'
+      '\li{\b{0x1A} - PUSH (push to the stack by decreasing the value of SP and using the decreased value as the address to store the new value). Note that this assumes that the parameter is used as the destination for some operation). This can be used in combination with \b{SET} to push values to the stack.}'
+      '\li{\b{0x1B} - the SP register''s value}'
+      '\li{\b{0x1C} - the PC register''s value. This can be used to jump around the code and return from subroutines when used with \b{POP} above.}'
+      '\li{\b{0x1D} - the O register''s value}'
+      '\li{\b{0x1E} - /[address/] (the address is stored after the instruction)}'
+      '\li{\b{0x1F} - literal (the literal is stored after the instruction)}'
+      '\li{\b{0x20-0x3F} - literal 0x00-0x1F}}'
+      '\p{For details see \b{http:////0x10c.com//doc//dcpu-16.txt}}'
+      '}'
+      ''
+      '\page[dcpu16ins]{'
+      '\title[The DCPU-16 Instruction Set]'
+      '\h[1]{DCPU-16 Instructions}'
+      '\p{The DCPU-16 instruction set is as follows:}'
+      '\ul{'
+      '\li{\b{SET a, b} - set a to b}'
+      '\li{\b{ADD a, b} - set a to a + b, set O to 0x0001 if there is an overflow}'
+      '\li{\b{SUB a, b} - set a to a - b, set O to 0xFFFF if there is an underflow}'
+      '\li{\b{MUL a, b} - set a to a * b, set O to ((a * b) >> 16) & 0xFFFF}'
+      '\li{\b{DIV a, b} - set a to a // b, set O to ((a << 16) // b) & 0xFFFF. If b is 0 then both a and O are set to 0.}'
+      '\li{\b{MOD a, b} - set a to a % b. If b is 0 then a is set to 0.}'
+      '\li{\b{SHL a, b} - set a to a << b, set O to ((a << b) >> 16) & 0xFFFF}'
+      '\li{\b{SHR a, b} - set a to a >> b, set O to ((a << 16) >> b) & 0xFFFF}'
+      '\li{\b{AND a, b} - set a to a & b}'
+      '\li{\b{BOR a, b} - set a to a | b}'
+      '\li{\b{XOR a, b} - set a to a ^ b}'
+      '\li{\b{IFE a, b} - executes the next instruction only if a == b}'
+      '\li{\b{IFN a, b} - executes the next instruction only if a != b}'
+      '\li{\b{IFG a, b} - executes the next instruction only if a > b}'
+      '\li{\b{IFB a, b} - executes the next instruction only if (a & b) != 0}'
+      '\li{\b{JSR addr} - pushes the current PC to the stack and sets it to addr. Can be used to call subroutines}}'
+      '\p{All word reads take one cycle (this includes instruction reads). The instructions ADD, SUB, MUL, SHR, JSR, IFE, IFN, IFG and IFB take an additional cycle (if the test fail for the last four, another extra cycle is used). The instructions DIV and MOD take two additional cycles.}'
+      '}'
+    )
+    left = 664
+    top = 240
+  end
+  object LazHelpWindowedViewer1: TLazHelpWindowedViewer
+    LazHelp = LazHelp1
+    RegisterHelpManager = False
+    left = 624
+    top = 304
+  end
+  object odCode: TOpenDialog
+    Title = 'Open Assembly Code'
+    DefaultExt = '.dasm16'
+    Filter = 'DCPU-16 Assembly (*.dasm16)|*.dasm16|All files|*.*;*'
+    Options = [ofFileMustExist, ofEnableSizing, ofViewDetail]
+    left = 39
+    top = 54
+  end
+  object sdCode: TSaveDialog
+    Title = 'Save Assembly Code As'
+    DefaultExt = '.dasm16'
+    Filter = 'DCPU-16 Assembly (*.dasm16)|*.dasm16|All files|*.*;*'
+    Options = [ofPathMustExist, ofEnableSizing, ofViewDetail]
+    left = 112
+    top = 54
+  end
+  object odProgram: TOpenDialog
+    Title = 'Load Program From'
+    DefaultExt = '.dcpu16'
+    Filter = 'DCPU-16 Binary Programs (*.dcpu16)|*.dcpu16|All Files|*.*;*'
+    Options = [ofFileMustExist, ofEnableSizing, ofViewDetail]
+    left = 39
+    top = 133
+  end
+  object sdProgram: TSaveDialog
+    Title = 'Save Program As'
+    DefaultExt = '.dcpu16'
+    Filter = 'DCPU-16 Binary Programs (*.dcpu16)|*.dcpu16|All Files|*.*;*'
+    Options = [ofPathMustExist, ofEnableSizing, ofViewDetail]
+    left = 112
+    top = 133
+  end
+end
