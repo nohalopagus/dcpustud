@@ -175,6 +175,10 @@ begin
   mCode.Font.Name:='FixedSys';
   mCode.ExtraCharSpacing:=-1;
   mCode.ExtraLineSpacing:=0;
+  {$ELSE}
+  lbDisassembly.Font.Name:=mCode.Font.Name;
+  lbMemoryDump.Font.Name:=mCode.Font.Name;
+  mMessages.Font.Name:=mCode.Font.Name;
   {$ENDIF}
   for I:=0 to $FFFF do begin
     lbMemoryDump.Items.Add(HexStr(I, 4) + ':');
@@ -554,4 +558,4 @@ begin
 end;
 
 end.
-
+
