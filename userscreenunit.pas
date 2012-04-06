@@ -41,6 +41,9 @@ begin
     VK_UP: Main.KeyWasTyped(#3);
     VK_DOWN: Main.KeyWasTyped(#4);
     VK_ESCAPE: Main.KeyWasTyped(#27);
+    VK_RETURN: Main.KeyWasTyped(#10);
+    VK_BACK: Main.KeyWasTyped(#8);
+    VK_TAB: Main.KeyWasTyped(#9);
   end;
 end;
 
