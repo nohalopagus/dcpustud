@@ -29,7 +29,7 @@
 \title[The DCPU-16 Studio Debugger]
 \h[1]{The Debugger}
 \p{The debugger should be straightforward: load any program and you can run it or step through it. To run in full speed check the \b{Running} checkbox. The emulator can be either cycle exact or always a single instruction per cycle based on the state of the \b{Cycle Exact} checkbox. If that checkbox is checked, the DCPU-16 Studio will disable all monitors (except the screen) and run the program at 100KHz. Otherwise the execution will be synced to the monitors. If the \b{Follow} checkbox is checked, the debugger will show the instruction to be executed next and the last changed value in memory. The emulator also shows the cycles of the last instruction and the current execution flag.}
-\p{You can modify the program's registers while the program is running or paused.}}
+\p{You can modify the program's registers while the program is running or paused. Double clicking on an instruction in the disassembler window will place a breakpoint there (an icon with a hand will appear). If PC is set to an instruction with a breakpoint, the execution will be paused. Additionally, all instructions that were pointed to by PC will have a small blue circle in front of them.}}
 
 \page[dcpu16]{
 \title[The DCPU-16 Specifications]
@@ -54,6 +54,7 @@
 \li{\b{0x20-0x3F} - literal 0x00-0x1F}}
 \p{For details see \b{http:////0x10c.com//doc//dcpu-16.txt}}
 \p{The emulator also supports the undocumented 32x16 character screen which starts at memory location $8000 and is 512 (32x16) words. Each word contains the foreground color, background color, character and blinking attribute of a character. The word has the format FFFFBBBBLCCCCCCC. FFFF is the foreground color, BBBB is the background color, L is the blinking bit and C is the ASCII character code. The color palette is the same as the one used in PC textmode programs.}
+\p{A keyboard interface is also provided. The keyboard simply puts the typed character at memory location $9000. If there is already a character there (the value is not zero), the emulator will not replace it but beep instead. The program is expected to set the location to zero to accept a new keystroke.}
 }
 
 \page[dcpu16ins]{
