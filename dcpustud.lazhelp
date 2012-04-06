@@ -28,7 +28,7 @@
 \page[debugger]{
 \title[The DCPU-16 Studio Debugger]
 \h[1]{The Debugger}
-\p{The debugger should be straightforward: load any program and you can run it or step through it. To run in full speed check the \b{Running} checkbox. The emulator can be either cycle exact or always a single instruction per cycle based on the state of the \b{Cycle Exact} checkbox. If the \b{Follow} checkbox is checked, the debugger will show the instruction to be executed next and the last changed value in memory. The emulator also shows the cycles of the last instruction and the current execution flag.}
+\p{The debugger should be straightforward: load any program and you can run it or step through it. To run in full speed check the \b{Running} checkbox. The emulator can be either cycle exact or always a single instruction per cycle based on the state of the \b{Cycle Exact} checkbox. If that checkbox is checked, the DCPU-16 Studio will disable all monitors (except the screen) and run the program at 100KHz. Otherwise the execution will be synced to the monitors. If the \b{Follow} checkbox is checked, the debugger will show the instruction to be executed next and the last changed value in memory. The emulator also shows the cycles of the last instruction and the current execution flag.}
 \p{You can modify the program's registers while the program is running or paused.}}
 
 \page[dcpu16]{
@@ -53,6 +53,7 @@
 \li{\b{0x1F} - literal (the literal is stored after the instruction)}
 \li{\b{0x20-0x3F} - literal 0x00-0x1F}}
 \p{For details see \b{http:////0x10c.com//doc//dcpu-16.txt}}
+\p{The emulator also supports the undocumented 32x16 character screen which starts at memory location $8000 and is 512 (32x16) words. Each word contains the foreground color, background color, character and blinking attribute of a character. The word has the format FFFFBBBBLCCCCCCC. FFFF is the foreground color, BBBB is the background color, L is the blinking bit and C is the ASCII character code. The color palette is the same as the one used in PC textmode programs.}
 }
 
 \page[dcpu16ins]{

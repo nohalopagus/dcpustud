@@ -31,6 +31,7 @@ type
     FOnRegisterChange: TRegisterChangeNotify;
     FSkipInstruction: Boolean;
     BurnCycles: Integer;
+    FUseBigEndianWords: Boolean;
     function GetCPURegister(Reg: TCPURegister): Word; inline;
     function GetMemory(Address: TMemoryAddress): Word; inline;
     function GetResourceMemory(Address: TResourceAddress): Word; inline;
@@ -56,6 +57,7 @@ type
     property SkipInstruction: Boolean read FSkipInstruction;
     property CycleExact: Boolean read FCycleExact write FCycleExact;
     property Cycles: Integer read FCycles;
+    property UseBigEndianWords: Boolean read FUseBigEndianWords write FUseBigEndianWords;
   end;
 
   TNameAddr = record
@@ -199,7 +201,7 @@ begin
   Result:='';
   SkipSpaces;
   while (Head <= Len) and (Code[Head] in SymbolCharacter) do begin
-    Result:=Result + Code[Head];
+    Result:=Result + UpCase(Code[Head]);
     Inc(Head);
   end;
 end;
@@ -239,7 +241,7 @@ var
   LabelName: string;
 begin
   Inc(Head);
-  LabelName:=UpperCase(NextToken);
+  LabelName:=NextToken;
   AddSymbol(LabelName, Size);
 end;
 
@@ -448,7 +450,7 @@ var
       end else if Code[Head] in ['0'..'9', '-', '$'] then begin
         Exit(WriteLiteral(NextNumber and $FFFF));
       end else begin
-        Token:=UpperCase(NextToken);
+        Token:=NextToken;
         if Token='' then begin
           SetError('Syntax error in parameter for ' + CPUInstructionNames[AInstr], Head);
           Exit(0);
@@ -498,7 +500,7 @@ var
 
 begin
   SaveHead:=Head;
-  InstrName:=UpperCase(NextToken);
+  InstrName:=NextToken;
   if InstrName='' then begin
     SetError('Syntax error - an instruction was expected here', SaveHead);
     Exit;
@@ -811,9 +813,16 @@ var
 begin
   try
     Stream:=TFileStream.Create(AFileName, fmCreate);
-    for I:=0 to Length - 1 do begin
-      Stream.WriteByte(Memory[I] and $FF);
-      Stream.WriteByte(Memory[I] shr 8);
+    if UseBigEndianWords then begin
+      for I:=0 to Length - 1 do begin
+        Stream.WriteByte(Memory[I] shr 8);
+        Stream.WriteByte(Memory[I] and $FF);
+      end;
+    end else begin
+      for I:=0 to Length - 1 do begin
+        Stream.WriteByte(Memory[I] and $FF);
+        Stream.WriteByte(Memory[I] shr 8);
+      end;
     end;
   finally
     FreeAndNil(Stream);
@@ -829,12 +838,20 @@ begin
   Result:=0;
   try
     Stream:=TFileStream.Create(AFileName, fmOpenRead);
-    if Stream.Size > High(TMemoryAddress) + 1 then
+    if Stream.Size div 2 > High(TMemoryAddress) + 1 then
       raise EDCPU16Exception.Create('Program too big to fit in DCPU-16 memory!');
-    for I:=0 to Stream.Size div 2 - 1 do begin
-      W:=Stream.ReadByte;
-      W:=W or Stream.ReadByte shl 8;
-      ResourceMemory[I]:=W
+    if UseBigEndianWords then begin
+      for I:=0 to Stream.Size div 2 - 1 do begin
+        W:=Stream.ReadByte shl 8;
+        W:=W or Stream.ReadByte;
+        ResourceMemory[I]:=W;
+      end;
+    end else begin
+      for I:=0 to Stream.Size div 2 - 1 do begin
+        W:=Stream.ReadByte;
+        W:=W or Stream.ReadByte shl 8;
+        ResourceMemory[I]:=W;
+      end;
     end;
     Result:=Stream.Size div 2;
   finally
@@ -881,9 +898,15 @@ begin
   Instruction:=TCPUInstruction(OpCode and $0F);
   if Instruction=ciExtendedPrefix then begin
     Instruction:=TCPUInstruction(((opCode and $3F0) shr 4) + Ord(ciReserved));
-    Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter(OpCode shr 10);
+    if Instruction in [Low(TCPUInstruction)..High(TCPUInstruction)] then
+      Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter(OpCode shr 10)
+    else
+      Result:='; Invalid opcode - ' + HexStr(OpCode, 4);
   end else begin
-    Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter((OpCode shr 4) and $3F) + ', ' + DecodeParameter(OpCode shr 10);
+    if Instruction in [Low(TCPUInstruction)..High(TCPUInstruction)] then
+      Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter((OpCode shr 4) and $3F) + ', ' + DecodeParameter(OpCode shr 10)
+    else
+      Result:='; Invalid opcode - ' + HexStr(OpCode, 4);
   end;
 end;
 

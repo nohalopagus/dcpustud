@@ -52,6 +52,8 @@ type
     mCPUBar1: TMenuItem;
     mCPUSaveProgram: TMenuItem;
     mCPULoadProgram: TMenuItem;
+    mCPUBar2: TMenuItem;
+    mCPUUseBigEndianWords: TMenuItem;
     mFileNew: TMenuItem;
     mFileOpen: TMenuItem;
     mFileSave: TMenuItem;
@@ -103,6 +105,7 @@ type
     procedure mCPUResetClick(Sender: TObject);
     procedure mCPUSaveProgramClick(Sender: TObject);
     procedure mCPUSingleStepClick(Sender: TObject);
+    procedure mCPUUseBigEndianWordsClick(Sender: TObject);
     procedure mFileNewClick(Sender: TObject);
     procedure mFileOpenClick(Sender: TObject);
     procedure mFileQuitClick(Sender: TObject);
@@ -131,7 +134,7 @@ type
     InstructionAddresses: array [TMemoryAddress] of Integer;
     LastKnownProgramSize: Integer;
     ScreenBitmap: TBitmap;
-    LastTicks: Cardinal;
+    NowTicks, LastTicks: Cardinal;
     TouchedMemory: array [TMemoryAddress] of Boolean;
     procedure OnMemoryChange(ASender: TObject; MemoryAddress: TMemoryAddress; var MemoryValue: Word);
     procedure OnRegisterChange(ASender: TObject; CPURegister: TCPURegister; var RegisterValue: Word);
@@ -194,6 +197,8 @@ var
 
 begin
   LoadFont;
+  lbDisassembly.ScrollWidth:=0;
+  lbMemoryDump.ScrollWidth:=0;
   ScreenBitmap:=TBitmap.Create;
   ScreenBitmap.PixelFormat:=pf32bit;
   ScreenBitmap.SetSize(128, 128);
@@ -260,8 +265,7 @@ begin
       WriteMessage('Loaded ' + IntToStr(Size) + ' words of program code');
       DisassembleFrom(0, Size);
     except
-      MessageDlg('Error', 'Failed to load program code from the file ' + odProgram.FileName, mtError, [mbOK], 0);
-      DisassembleFrom(0, High(TMemoryAddress));
+      MessageDlg('Error', 'Failed to load program code from the file ' + odProgram.FileName + ': ' + Exception(ExceptObject).Message, mtError, [mbOK], 0);
     end;
   end;
 end;
@@ -291,6 +295,12 @@ procedure TMain.mCPUSingleStepClick(Sender: TObject);
 begin
   SingleStep;
   DrawScreen;
+end;
+
+procedure TMain.mCPUUseBigEndianWordsClick(Sender: TObject);
+begin
+  mCPUUseBigEndianWords.Checked:=not mCPUUseBigEndianWords.Checked;
+  CPU.UseBigEndianWords:=mCPUUseBigEndianWords.Checked;
 end;
 
 procedure TMain.mFileNewClick(Sender: TObject);
@@ -431,16 +441,15 @@ var
   CyclesToRun: Integer;
   Reg: TCPURegister;
   I: Integer;
-  TicksNow: Cardinal;
 begin
   Done:=False;
-  TicksNow:=GetTickCount;
+  NowTicks:=GetTickCount;
   if cbRunning.Checked then begin
     if cbCycleExact.Checked then begin
       for Reg:=crA to crO do
         SpinEditByReg[Reg].Color:=clDefault;
       try
-        while TicksNow - LastTicks > 10 do begin
+        while NowTicks - LastTicks > 10 do begin
           CyclesToRun:=1000;
           while CyclesToRun > 1 do begin
             CPU.RunCycle;
@@ -528,7 +537,10 @@ begin
     Exit;
   end;
   lbMemoryDump.Items[MemoryAddress]:=HexStr(MemoryAddress, 4) + ' (' + Format('%05d', [MemoryAddress]) + '): ' + HexStr(MemoryValue, 4) + ' (' + Format('%05d', [MemoryValue]) + ')';
-  if cbFollow.Checked then lbMemoryDump.ItemIndex:=MemoryAddress;
+  if cbFollow.Checked then begin
+    lbMemoryDump.ItemIndex:=MemoryAddress;
+    Application.ProcessMessages;
+  end;
 end;
 
 procedure TMain.OnRegisterChange(ASender: TObject; CPURegister: TCPURegister;
@@ -538,7 +550,7 @@ begin
   SpinEditByReg[CPURegister].Value:=RegisterValue;
   SpinEditByReg[CPURegister].Color:=clYellow;
   if CPURegister=crPC then begin
-    if cbFollow.Checked and (InstructionAddresses[RegisterValue] >= 0) and (InstructionAddresses[RegisterValue] <= High(TMemoryAddress)) then
+    if cbFollow.Checked and (InstructionAddresses[RegisterValue] >= 0) and (InstructionAddresses[RegisterValue] < lbDisassembly.Count) then
       lbDisassembly.ItemIndex:=InstructionAddresses[RegisterValue];
     if CPU.SkipInstruction then
       lbNextInstructionState.Caption:='The next will instruction will be skipped'
@@ -606,38 +618,6 @@ begin
     PrevRegValues[I]:=CPU.CPURegister[I];
     SpinEditByReg[I].Color:=clDefault;
   end;
-  CPU[$0000]:=$7c01;
-  CPU[$0001]:=$0030;
-  CPU[$0002]:=$7de1;
-  CPU[$0003]:=$1000;
-  CPU[$0004]:=$0020;
-  CPU[$0005]:=$7803;
-  CPU[$0006]:=$1000;
-  CPU[$0007]:=$c00d;
-  CPU[$0008]:=$7dc1;
-  CPU[$0009]:=$001a;
-  CPU[$000A]:=$a861;
-  CPU[$000B]:=$7c01;
-  CPU[$000C]:=$2000;
-  CPU[$000D]:=$2161;
-  CPU[$000E]:=$2000;
-  CPU[$000F]:=$8463;
-  CPU[$0010]:=$806d;
-  CPU[$0011]:=$7dc1;
-  CPU[$0012]:=$000d;
-  CPU[$0013]:=$9031;
-  CPU[$0014]:=$7c10;
-  CPU[$0015]:=$0018;
-  CPU[$0016]:=$7dc1;
-  CPU[$0017]:=$001a;
-  CPU[$0018]:=$9037;
-  CPU[$0019]:=$61c1;
-  CPU[$001A]:=$7dc1;
-  CPU[$001B]:=$001a;
-  CPU[$001C]:=$0000;
-  CPU[$001D]:=$0000;
-  CPU[$001E]:=$0000;
-  CPU[$001F]:=$0000;
   cbRunning.Checked:=False;
   if lbDisassembly.Items.Count > 0 then lbDisassembly.ItemIndex:=0;
   lbMemoryDump.ItemIndex:=0;
@@ -665,13 +645,17 @@ var
                   $FF10FFFF, $FFFFFFFF);
     {$ENDIF}
   var
-    Ch: Integer;
+    Ch: Word;
     C, B: TColor;
     IX, IY: Integer;
   begin
     Ch:=Cell and $FF;
     C:=RealColors[(Cell and $F000) shr 12];
     B:=RealColors[(Cell and $0F00) shr 8];
+    if Ch > $7F then begin
+      Ch:=Ch and $7F;
+      if ((NowTicks shr 8) and 1)=1 then C:=B;
+    end;
     for IY:=0 to 7 do
       for IX:=0 to 3 do begin
         if Fnt[Ch][IX, IY] then
@@ -716,4 +700,4 @@ begin
 end;
 
 end.
-
+
