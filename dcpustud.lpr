@@ -10,7 +10,9 @@ uses
   Forms, MainUnit, DCPU16, lazhelppackage;
 
 {$R *.res}
+{$IFDEF WINDOWS}
 {$R fontdata.rc}
+{$ENDIF}
 
 begin
   Application.Title:='DCPU-16 Studio';
@@ -18,4 +20,4 @@ begin
   Application.CreateForm(TMain, Main);
   Application.Run;
 end.
-
+

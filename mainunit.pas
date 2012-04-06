@@ -172,10 +172,23 @@ var
 
   procedure LoadFont;
   var
+    {$IFDEF WINDOWS}
     Stream: TResourceStream;
+    {$ELSE}
+    Stream: TFileStream;
+    {$ENDIF}
   begin
-    Stream:=TResourceStream.Create(HINSTANCE, 'FONTDATA', 'FONTDATA');
-    Stream.Read(Fnt, SizeOf(Fnt));
+    Stream:=nil;
+    try
+      {$IFDEF WINDOWS}
+      Stream:=TResourceStream.Create(HINSTANCE, 'FONTDATA', 'FONTDATA');
+      {$ELSE}
+      Stream:=TFileStream.Create('fontdata.fda', fmOpenRead);
+      {$ENDIF}
+      Stream.Read(Fnt, SizeOf(Fnt));
+    except
+      MessageDlg('Error', 'Error loading fonts', mtError, [mbOK], 0);
+    end;
     FreeAndNil(Stream);
   end;
 
@@ -647,9 +660,9 @@ var
                   $FFFF10, $FFFFFF);
     {$ELSE}
     RealColors: array [0..15] of TColor =
-                 ($101010, $AA1010, $10AA10, $AAAA10, $1010AA, $AA10AA, $1050AA,
-                  $AAAAAA, $808080, $FF1010, $10FF10, $FFFF10, $1010FF, $FF10FF,
-                  $10FFFF, $FFFFFF);
+                 ($FF101010, $FFAA1010, $FF10AA10, $FFAAAA10, $FF1010AA, $FFAA10AA, $FF1050AA,
+                  $FFAAAAAA, $FF808080, $FFFF1010, $FF10FF10, $FFFFFF10, $FF1010FF, $FFFF10FF,
+                  $FF10FFFF, $FFFFFFFF);
     {$ENDIF}
   var
     Ch: Integer;
@@ -679,7 +692,8 @@ begin
       Inc(Addr);
     end;
   ScreenBitmap.EndUpdate(False);
-  pbScreen.Canvas.CopyRect(Rect(0, 0, 128, 128), ScreenBitmap.Canvas, Rect(0, 0, 128, 128));
+  //pbScreen.Canvas.CopyRect(Rect(0, 0, 128, 128), ScreenBitmap.Canvas, Rect(0, 0, 128, 128));
+  pbScreen.Canvas.Draw(0, 0, ScreenBitmap);
 end;
 
 function TMain.ConfirmOk: Boolean;
@@ -702,4 +716,4 @@ begin
 end;
 
 end.
-
+
