@@ -7,10 +7,10 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, MainUnit, DCPU16, lazhelppackage
-  { you can add units after this };
+  Forms, MainUnit, DCPU16, lazhelppackage;
 
 {$R *.res}
+{$R fontdata.rc}
 
 begin
   Application.Title:='DCPU-16 Studio';

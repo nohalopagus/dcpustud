@@ -13,9 +13,17 @@
 \title[The DCPU-16 Studio Assembler]
 \h[1]{The Assembler}
 \p{The \b{DCPU-16 Studio Assembler} follows closely the style used by the official DCPU-16 specs with only few differences. In the assembler, labels and instructions can be placed anywhere on a line and multiple instructions can be placed in the same line. Like in the official style, the labels begin with a colon. Hexadecimals must be prefaced with either 0x or $ (the latter is a DCPU-16 Studio extension). Neither the code nor the symbols are case sensitive.}
-\p{The \b{RESERVE x} pseudoinstruction can be used to reserve x words in the program. The \b{DATA d1, d2, d3, ...} pseudoinstruction can be used to put words directly in the program code.}
+\p{The \b{RESERVE x} pseudoinstruction can be used to reserve x words in the program. The \b{DATA d1, d2, d3, ...} pseudoinstruction can be used to put words and \a[asmstrlit]{string literals} directly in the program code. For compatibility with other assemblers, the pseudoinstructions \b{DAT} and \b{DW} are equivalent to DATA and the pseudoinstruction \b{RESW} is equivalent to RESERVE.}
 \p{Comments can being with either the semicolon symbol or the C++-like double slash (this is a DCPU-16 Studio extension).}
 \p{DCPU-16 Studio does not generate the same exactly bytecodes as the official assembler. For example the test program provided by the official specs is shorter a few bytes.}}
+
+\page[asmstrlit]{
+\title[Assembler String Literals]
+\h[1]{String Literals}
+\p{The assembler can insert arbitrary words in the program using the \b{DATA} pseudoinstruction. The instruction accepts numbers and string literals. The string literals are encoded as one word per character and they are written in C-like or Pascal-like syntax using double or single quotes. If you use double quotes, you can use two double quotes to insert a double quote character to the program (similarly for single quotes). For example the string "He said ""Hello""" inserts He said "Hello".}
+\p{The strings can also contain C-like escape characters with the escapes \b{0} (for NUL), \b{A} (Bell, 0x07), \b{B} (Backspace, 0x08), \b{T} (Tab, 0x09), \b{N} (Newline, 0x0A), \b{V} (Vertical Tab, 0x0B), \b{F} (Formfeed, 0x0C), \b{R} (Carriage Return, 0x0D), \b{E} (Escape, 0x1B) and \b{S} (Space, 0x20). Any other character is inserted as-is, so he escape character can also be used to escape the quotes above.}
+\p{Note that the syntax highligher only supports double quotes and doesn't support escaping the quotes.}
+}
 
 \page[debugger]{
 \title[The DCPU-16 Studio Debugger]

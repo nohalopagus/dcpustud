@@ -244,15 +244,54 @@ begin
 end;
 
 procedure TAssembler.AssembleData;
+var
+  Ch: Char;
 begin
   while (Head <= Len) and not Error do begin
     SkipSpaces;
     if Head > Len then Break;
-    if not (Code[Head] in ['0'..'9', '$', '-']) then begin
-      SetError('Number expected in DATA', Head);
+    if Code[Head] in ['''', '"'] then begin
+      Ch:=Code[Head];
+      Inc(Head);
+      while Head <= Len do begin
+        if Code[Head]=Ch then begin
+          Inc(Head);
+          if (Head <= Len) and (Code[Head]=Ch) then begin
+            AddWord(Ord(Ch));
+            Inc(Head);
+          end else
+            Break;
+        end else if Code[Head]='\' then begin
+          Inc(Head);
+          if Head > Len then begin
+            SetError('Unexpected end of code in string data', Head);
+            Exit;
+          end;
+          case UpCase(Code[Head]) of
+            '0': AddWord($00);
+            'A': AddWord($07);
+            'B': AddWord($08);
+            'T': AddWord($09);
+            'N': AddWord($0A);
+            'V': AddWord($0B);
+            'F': AddWord($0C);
+            'R': AddWord($0D);
+            'E': AddWord($1B);
+            'S': AddWord($20);
+            else AddWord(Ord(Code[Head]));
+          end;
+          Inc(Head);
+        end else begin
+          AddWord(Ord(Code[Head]));
+          Inc(Head);
+        end;
+      end;
+    end else if Code[Head] in ['0'..'9', '$', '-'] then begin
+      AddWord(NextNumber and $FFFF);
+    end else begin
+      SetError('Number or string literal expected in DATA', Head);
       Exit;
     end;
-    AddWord(NextNumber and $FFFF);
     SkipSpaces;
     if (Head > Len) or (Code[Head] <> ',') then Break;
     if Code[Head]=',' then Inc(Head);
@@ -309,7 +348,7 @@ var
         SetError('Unexpected end of code while parsing parameter for ' + CPUInstructionNames[AInstr], Head);
         Exit(0);
       end;
-      if Code[Head]='[' then begin
+      if Code[Head] in ['[', '('] then begin
         Inc(Head);
         if Head > Len then begin
           SetError('Unexpected end of code inside memory access parameter for ' + CPUInstructionNames[AInstr], Head);
@@ -334,8 +373,8 @@ var
             for Reg:=crA to crJ do
               if CPURegisterNames[Reg]=Token then begin
                 SkipSpaces;
-                if not ((Head <= Len) and (Code[Head]=']')) then
-                  SetError('Closing bracket ] expected after memory address in ' + CPUInstructionNames[AInstr], Head)
+                if not ((Head <= Len) and (Code[Head] in [']', ')'])) then
+                  SetError('Closing bracket ] or ) expected after memory address in ' + CPUInstructionNames[AInstr], Head)
                 else
                   Inc(Head);
                 AddWord(I);
@@ -346,8 +385,8 @@ var
           end;
           AddWord(I);
           SkipSpaces;
-          if not ((Head <= Len) and (Code[Head]=']')) then
-            SetError('Closing bracket ] expected after memory address in ' + CPUInstructionNames[AInstr], Head)
+          if not ((Head <= Len) and (Code[Head] in [']', ')'])) then
+            SetError('Closing bracket ] or ) expected after memory address in ' + CPUInstructionNames[AInstr], Head)
           else
             Inc(Head);
           Exit($1E);
@@ -361,8 +400,8 @@ var
         for Reg:=crA to crJ do
           if CPURegisterNames[Reg]=Token then begin
             SkipSpaces;
-            if not ((Head <= Len) and (Code[Head]=']')) then
-              SetError('Closing bracket ] expected after memory address in ' + CPUInstructionNames[AInstr], Head)
+            if not ((Head <= Len) and (Code[Head] in [']', ')'])) then
+              SetError('Closing bracket ] or expected after memory address in ' + CPUInstructionNames[AInstr], Head)
             else
               Inc(Head);
             Exit($08 + Ord(Reg));
@@ -392,8 +431,8 @@ var
           for Reg:=crA to crJ do
             if CPURegisterNames[Reg]=Token then begin
               SkipSpaces;
-              if not ((Head <= Len) and (Code[Head]=']')) then
-                SetError('Closing bracket ] expected after memory address in ' + CPUInstructionNames[AInstr], Head)
+              if not ((Head <= Len) and (Code[Head] in [']', ')'])) then
+                SetError('Closing bracket ] or ) expected after memory address in ' + CPUInstructionNames[AInstr], Head)
               else
                 Inc(Head);
               Exit($10 + Ord(Reg));
@@ -401,8 +440,8 @@ var
           SetError('Cannot use ' + Token + ' as a base for memory access in ' + CPUInstructionNames[AInstr] + ' after address', SaveHead);
           Exit(0);
         end;
-        if not ((Head <= Len) and (Code[Head]=']')) then
-          SetError('Closing bracket ] expected after memory address in ' + CPUInstructionNames[AInstr], Head)
+        if not ((Head <= Len) and (Code[Head] in [']', ')'])) then
+          SetError('Closing bracket ] or ) expected after memory address in ' + CPUInstructionNames[AInstr], Head)
         else
           Inc(Head);
         Exit($1E);
@@ -464,11 +503,11 @@ begin
     SetError('Syntax error - an instruction was expected here', SaveHead);
     Exit;
   end;
-  if InstrName='DATA' then begin
+  if (InstrName='DW') or(InstrName='DAT') or (InstrName='DATA') then begin
     AssembleData;
     Exit;
   end;
-  if InstrName='RESERVE' then begin
+  if (InstrName='RESW') or (InstrName='RESERVE') then begin
     AssembleReserve;
     Exit;
   end;
@@ -744,6 +783,7 @@ end;
 procedure TCPU.Reset;
 var
   I: TCPURegister;
+  J: Integer;
 begin
   FSkipInstruction:=False;
   FCycles:=0;

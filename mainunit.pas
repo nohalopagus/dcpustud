@@ -7,9 +7,12 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
   Spin, ExtCtrls, Menus, DCPU16, LazHelp, SynEdit, SynCompletion,
-  SynHighlighterAny;
+  SynHighlighterAny, GraphType, LCLIntf;
 
 type
+
+  TFontChar = bitpacked array [0..3, 0..7] of Boolean;
+  TSmallFont = array [0..127] of TFontChar;
 
   { TMain }
 
@@ -21,6 +24,7 @@ type
     cbRunning: TCheckBox;
     cbFollow: TCheckBox;
     cbCycleExact: TCheckBox;
+    lbScreen: TLabel;
     LazHelp1: TLazHelp;
     LazHelpWindowedViewer1: TLazHelpWindowedViewer;
     lbLastCycles: TLabel;
@@ -67,6 +71,8 @@ type
     mMessages: TMemo;
     odCode: TOpenDialog;
     odProgram: TOpenDialog;
+    pbScreen: TPaintBox;
+    plScreen: TPanel;
     sdProgram: TSaveDialog;
     sdCode: TSaveDialog;
     seA: TSpinEdit;
@@ -90,6 +96,7 @@ type
     procedure cbCycleExactChange(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormCreate(Sender: TObject);
+    procedure FormDestroy(Sender: TObject);
     procedure lbDisassemblyDblClick(Sender: TObject);
     procedure mAssemblyAssembleClick(Sender: TObject);
     procedure mCPULoadProgramClick(Sender: TObject);
@@ -103,6 +110,7 @@ type
     procedure mFileSaveClick(Sender: TObject);
     procedure mHelpAboutClick(Sender: TObject);
     procedure mHelpContentsClick(Sender: TObject);
+    procedure pbScreenPaint(Sender: TObject);
     procedure seAChange(Sender: TObject);
     procedure seBChange(Sender: TObject);
     procedure seCChange(Sender: TObject);
@@ -117,17 +125,23 @@ type
   private
     FCPU: TCPU;
     FFileName: string;
+    Fnt: TSmallFont;
     PrevRegValues: array [TCPURegister] of Word;
     SpinEditByReg: array [TCPURegister] of TSpinEdit;
     InstructionAddresses: array [TMemoryAddress] of Integer;
     LastKnownProgramSize: Integer;
+    ScreenBitmap: TBitmap;
+    LastTicks: Cardinal;
+    TouchedMemory: array [TMemoryAddress] of Boolean;
     procedure OnMemoryChange(ASender: TObject; MemoryAddress: TMemoryAddress; var MemoryValue: Word);
     procedure OnRegisterChange(ASender: TObject; CPURegister: TCPURegister; var RegisterValue: Word);
     procedure DisassembleFrom(Address, EndAddress: TMemoryAddress);
     procedure SetFileName(const AValue: string);
     procedure SingleStep;
     procedure Reset;
+    procedure DrawScreen;
     function ConfirmOk: Boolean;
+    procedure UpdateAllMonitors;
   public
     property CPU: TCPU read FCPU;
     property FileName: string read FFileName write SetFileName;
@@ -155,7 +169,21 @@ end;
 procedure TMain.FormCreate(Sender: TObject);
 var
   I: Integer;
+
+  procedure LoadFont;
+  var
+    Stream: TResourceStream;
+  begin
+    Stream:=TResourceStream.Create(HINSTANCE, 'FONTDATA', 'FONTDATA');
+    Stream.Read(Fnt, SizeOf(Fnt));
+    FreeAndNil(Stream);
+  end;
+
 begin
+  LoadFont;
+  ScreenBitmap:=TBitmap.Create;
+  ScreenBitmap.PixelFormat:=pf32bit;
+  ScreenBitmap.SetSize(128, 128);
   WriteMessage('Welcome');
   SpinEditByReg[crA]:=seA;
   SpinEditByReg[crB]:=seB;
@@ -190,6 +218,11 @@ begin
   Reset;
   DisassembleFrom(0, $FFFF);
   lbDisassembly.ItemIndex:=0;
+end;
+
+procedure TMain.FormDestroy(Sender: TObject);
+begin
+  FreeAndNil(ScreenBitmap);
 end;
 
 procedure TMain.lbDisassemblyDblClick(Sender: TObject);
@@ -244,6 +277,7 @@ end;
 procedure TMain.mCPUSingleStepClick(Sender: TObject);
 begin
   SingleStep;
+  DrawScreen;
 end;
 
 procedure TMain.mFileNewClick(Sender: TObject);
@@ -267,6 +301,7 @@ begin
       FileName:=odCode.FileName;
       mCode.Modified:=False;
       Reset;
+      mAssemblyAssembleClick(Sender);
     except
       MessageDlg('Error', 'Failed to open file ' + odCode.FileName, mtError, [mbOK], 0);
     end;
@@ -294,13 +329,12 @@ begin
     Exit;
   end;
   try
-    mCode.Lines.SaveToFile(sdCode.FileName);
+    mCode.Lines.SaveToFile(FileName);
     FileName:=sdCode.FileName;
     mCode.MarkTextAsSaved;
     mCode.Modified:=False;
-    Reset;
   except
-    MessageDlg('Error', 'Failed to save file ' + FileName, mtError, [mbOK], 0);
+    MessageDlg('Error', 'Failed to save file ' + FileName + ': ' + Exception(ExceptObject).Message, mtError, [mbOK], 0);
   end;
 end;
 
@@ -312,6 +346,11 @@ end;
 procedure TMain.mHelpContentsClick(Sender: TObject);
 begin
   LazHelpWindowedViewer1.ShowHelp;
+end;
+
+procedure TMain.pbScreenPaint(Sender: TObject);
+begin
+  DrawScreen;
 end;
 
 procedure TMain.seAChange(Sender: TObject);
@@ -375,12 +414,38 @@ begin
 end;
 
 procedure TMain.ApplicationProperties1Idle(Sender: TObject; var Done: Boolean);
+var
+  CyclesToRun: Integer;
+  Reg: TCPURegister;
+  I: Integer;
+  TicksNow: Cardinal;
 begin
   Done:=False;
-  if cbRunning.Checked then
-    SingleStep
-  else
-    Sleep(1);
+  TicksNow:=GetTickCount;
+  if cbRunning.Checked then begin
+    if cbCycleExact.Checked then begin
+      for Reg:=crA to crO do
+        SpinEditByReg[Reg].Color:=clDefault;
+      try
+        while TicksNow - LastTicks > 10 do begin
+          CyclesToRun:=1000;
+          while CyclesToRun > 1 do begin
+            CPU.RunCycle;
+            Dec(CyclesToRun);
+          end;
+          Inc(LastTicks, 10);
+        end;
+      except
+        on EDCPU16Exception do begin
+          cbRunning.Checked:=False;
+          WriteMessage('DCPU-16 Exception: ' + Exception(ExceptObject).Message);
+          MessageDlg('DCPU-16 Exception', Exception(ExceptObject).Message, mtError, [mbOK], 0);
+        end;
+      end;
+    end else
+      SingleStep;
+    DrawScreen;
+  end else Sleep(1);
 end;
 
 procedure TMain.btAssembleClick(Sender: TObject);
@@ -421,11 +486,20 @@ end;
 procedure TMain.btSingleStepClick(Sender: TObject);
 begin
   SingleStep;
+  DrawScreen;
 end;
 
 procedure TMain.cbCycleExactChange(Sender: TObject);
+var
+  I: Integer;
 begin
   CPU.CycleExact:=cbCycleExact.Checked;
+  if cbCycleExact.Checked then begin
+    LastTicks:=GetTickCount;
+    for I:=0 to High(TouchedMemory) do TouchedMemory[I]:=False;
+  end else begin
+    UpdateAllMonitors;
+  end;
 end;
 
 procedure TMain.FormCloseQuery(Sender: TObject; var CanClose: boolean);
@@ -436,13 +510,18 @@ end;
 procedure TMain.OnMemoryChange(ASender: TObject; MemoryAddress: TMemoryAddress;
   var MemoryValue: Word);
 begin
-  lbMemoryDump.Items[MemoryAddress]:='0x' + HexStr(MemoryAddress, 4) + ' (' + Format('%05d', [MemoryAddress]) + '): ' + HexStr(MemoryValue, 4) + ' (' + Format('%05d', [MemoryValue]) + ')';
+  if cbCycleExact.Checked then begin
+    TouchedMemory[MemoryAddress]:=True;
+    Exit;
+  end;
+  lbMemoryDump.Items[MemoryAddress]:=HexStr(MemoryAddress, 4) + ' (' + Format('%05d', [MemoryAddress]) + '): ' + HexStr(MemoryValue, 4) + ' (' + Format('%05d', [MemoryValue]) + ')';
   if cbFollow.Checked then lbMemoryDump.ItemIndex:=MemoryAddress;
 end;
 
 procedure TMain.OnRegisterChange(ASender: TObject; CPURegister: TCPURegister;
   var RegisterValue: Word);
 begin
+  if cbCycleExact.Checked then Exit;
   SpinEditByReg[CPURegister].Value:=RegisterValue;
   SpinEditByReg[CPURegister].Color:=clYellow;
   if CPURegister=crPC then begin
@@ -488,6 +567,7 @@ end;
 procedure TMain.SingleStep;
 var
   Reg: TCPURegister;
+  I: Integer;
 begin
   for Reg:=crA to crO do
     SpinEditByReg[Reg].Color:=clDefault;
@@ -507,6 +587,7 @@ var
   I: TCPURegister;
 begin
   WriteMessage('Resetting');
+  LastTicks:=GetTickCount;
   CPU.Reset;
   for I:=crA to crO do begin
     PrevRegValues[I]:=CPU.CPURegister[I];
@@ -551,11 +632,74 @@ begin
   WriteMessage('Reset done');
 end;
 
+procedure TMain.DrawScreen;
+var
+  X, Y, Addr: Integer;
+  Raw: TRawImage;
+  PixelBuffer: PColor;
+
+  procedure DrawChar(X, Y: Integer; Cell: Word);
+  const
+    {$IFDEF WINDOWS}
+    RealColors: array [0..15] of TColor =
+                 ($101010, $1000AA, $10AA10, $10AAAA, $AA1010, $AA10AA, $AA5010,
+                  $AAAAAA, $808080, $1010ff, $10FF10, $10FFFF, $FF1010, $FF10FF,
+                  $FFFF10, $FFFFFF);
+    {$ELSE}
+    RealColors: array [0..15] of TColor =
+                 ($101010, $AA1010, $10AA10, $AAAA10, $1010AA, $AA10AA, $1050AA,
+                  $AAAAAA, $808080, $FF1010, $10FF10, $FFFF10, $1010FF, $FF10FF,
+                  $10FFFF, $FFFFFF);
+    {$ENDIF}
+  var
+    Ch: Integer;
+    C, B: TColor;
+    IX, IY: Integer;
+  begin
+    Ch:=Cell and $FF;
+    C:=RealColors[(Cell and $F000) shr 12];
+    B:=RealColors[(Cell and $0F00) shr 8];
+    for IY:=0 to 7 do
+      for IX:=0 to 3 do begin
+        if Fnt[Ch][IX, IY] then
+          PixelBuffer[(Y + IY)*(Raw.Description.BytesPerLine shr 2) + X + IX]:=C
+        else
+          PixelBuffer[(Y + IY)*(Raw.Description.BytesPerLine shr 2) + X + IX]:=B;
+      end;
+  end;
+
+begin
+  ScreenBitmap.BeginUpdate(False);
+  Raw:=ScreenBitmap.RawImage;
+  PixelBuffer:=PColor(Raw.Data);
+  Addr:=$8000;
+  for Y:=0 to 15 do
+    for X:=0 to 31 do begin
+      DrawChar(X*4, Y*8, CPU[Addr]);
+      Inc(Addr);
+    end;
+  ScreenBitmap.EndUpdate(False);
+  pbScreen.Canvas.CopyRect(Rect(0, 0, 128, 128), ScreenBitmap.Canvas, Rect(0, 0, 128, 128));
+end;
+
 function TMain.ConfirmOk: Boolean;
 begin
   if not mCode.Modified then Exit(True);
   Result:=MessageDlg('Modified', 'The code has been modified. If you continue you will lose the modifications. Do you really want to continue and lose them?', mtConfirmation, mbYesNo, 0)=mrYes;
 end;
 
+procedure TMain.UpdateAllMonitors;
+var
+  Reg: TCPURegister;
+  I: Integer;
+begin
+  for Reg:=crA to crO do
+    SpinEditByReg[Reg].Value:=CPU.CPURegister[Reg];
+  for I:=0 to High(TouchedMemory) do
+    if TouchedMemory[I] then begin
+      lbMemoryDump.Items[I]:=HexStr(I, 4) + ' (' + Format('%05d', [I]) + '): ' + HexStr(CPU[I], 4) + ' (' + Format('%05d', [CPU[I]]) + ')';
+    end;
+end;
+
 end.
-
+
