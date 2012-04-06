@@ -6,8 +6,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  Spin, ExtCtrls, Menus, DCPU16, LazHelp, SynEdit, SynCompletion,
-  SynHighlighterAny, GraphType, LCLIntf;
+  Spin, ExtCtrls, Menus, DCPU16, LazHelp, SynEdit,
+  SynHighlighterAny, GraphType, LCLIntf, LCLType, types;
 
 const
   VideoStart = $8000;
@@ -28,6 +28,7 @@ type
     cbRunning: TCheckBox;
     cbFollow: TCheckBox;
     cbCycleExact: TCheckBox;
+    ilIcons: TImageList;
     lbScreen: TLabel;
     LazHelp1: TLazHelp;
     LazHelpWindowedViewer1: TLazHelpWindowedViewer;
@@ -58,6 +59,8 @@ type
     mCPULoadProgram: TMenuItem;
     mCPUBar2: TMenuItem;
     mCPUUseBigEndianWords: TMenuItem;
+    mAssemblyRemoveBreakpoints: TMenuItem;
+    mCPUFullReset: TMenuItem;
     mViewClearMessages: TMenuItem;
     mViewBar1: TMenuItem;
     mViewUserScreen: TMenuItem;
@@ -104,11 +107,18 @@ type
     procedure btResetClick(Sender: TObject);
     procedure btSingleStepClick(Sender: TObject);
     procedure cbCycleExactChange(Sender: TObject);
+    procedure cbRunningChange(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
     procedure lbDisassemblyDblClick(Sender: TObject);
+    procedure lbDisassemblyDrawItem(Control: TWinControl; Index: Integer;
+      ARect: TRect; State: TOwnerDrawState);
+    procedure lbMemoryDumpDrawItem(Control: TWinControl; Index: Integer;
+      ARect: TRect; State: TOwnerDrawState);
     procedure mAssemblyAssembleClick(Sender: TObject);
+    procedure mAssemblyRemoveBreakpointsClick(Sender: TObject);
+    procedure mCPUFullResetClick(Sender: TObject);
     procedure mCPULoadProgramClick(Sender: TObject);
     procedure mCPUResetClick(Sender: TObject);
     procedure mCPUSaveProgramClick(Sender: TObject);
@@ -142,10 +152,14 @@ type
     PrevRegValues: array [TCPURegister] of Word;
     SpinEditByReg: array [TCPURegister] of TSpinEdit;
     InstructionAddresses: array [TMemoryAddress] of Integer;
+    DisassembledLines: array [TMemoryAddress] of string;
+    Breakpoint, ExecutedMark: array [TMemoryAddress] of Boolean;
     LastKnownProgramSize: Integer;
     ScreenBitmap: TBitmap;
     NowTicks, LastTicks: Cardinal;
-    TouchedMemory: array [TMemoryAddress] of Boolean;
+    CycleExact: Boolean;
+    Running: Boolean;
+    IgnoreFollow: Boolean;
     procedure OnMemoryChange(ASender: TObject; MemoryAddress: TMemoryAddress; var MemoryValue: Word);
     procedure OnRegisterChange(ASender: TObject; CPURegister: TCPURegister; var RegisterValue: Word);
     procedure DisassembleFrom(Address, EndAddress: TMemoryAddress);
@@ -186,6 +200,7 @@ end;
 procedure TMain.FormCreate(Sender: TObject);
 var
   I: Integer;
+  S: string;
 
   procedure LoadFont;
   var
@@ -240,9 +255,10 @@ begin
   lbMemoryDump.Font.Name:=mCode.Font.Name;
   mMessages.Font.Name:=mCode.Font.Name;
   {$ENDIF}
-  for I:=0 to $FFFF do begin
-    lbMemoryDump.Items.Add(HexStr(I, 4) + ':');
-  end;
+  S:='';
+  for I:=0 to $FFFF do S:=S + LineEnding;
+  lbMemoryDump.Items.Text:=S;
+  lbDisassembly.Items.Text:=S;
   FCPU:=TCPU.Create(Self);
   CPU.OnMemoryChange:=@OnMemoryChange;
   CPU.OnRegisterChange:=@OnRegisterChange;
@@ -259,13 +275,105 @@ end;
 
 procedure TMain.lbDisassemblyDblClick(Sender: TObject);
 begin
-  if (lbDisassembly.ItemIndex >= 0) and (lbDisassembly.ItemIndex <= High(TMemoryAddress)) then
-    CPU.CPURegister[crPC]:=lbDisassembly.ItemIndex;
+  if lbDisassembly.ItemIndex > -1 then begin
+    Breakpoint[lbDisassembly.ItemIndex]:=not Breakpoint[lbDisassembly.ItemIndex];
+    lbDisassembly.Repaint
+  end;
+end;
+
+procedure TMain.lbDisassemblyDrawItem(Control: TWinControl; Index: Integer;
+  ARect: TRect; State: TOwnerDrawState);
+var
+  Style: TTextStyle;
+begin
+  with Style do begin
+    Alignment:=taLeftJustify;
+    Layout:=tlCenter;
+    SingleLine:=True;
+    Clipping:=False;
+    ExpandTabs:=False;
+    ShowPrefix:=False;
+    Wordbreak:=False;
+    Opaque:=False;
+    SystemFont:=False;
+    RightToLeft:=False;
+  end;
+  with lbDisassembly.Canvas do begin
+    Font.Assign(lbDisassembly.Font);
+    if odSelected in State then begin
+      Brush.Color:=clHighlight;
+      Font.Color:=clHighlightText;
+    end else begin
+      Brush.Color:=clWindow;
+      Font.Color:=clWindowText;
+    end;
+    Pen.Color:=Brush.Color;
+    Rectangle(ARect);
+    TextRect(ARect, 20, ARect.Top + ((ARect.Bottom - ARect.Top) - TextHeight('W')) div 2, DisassembledLines[Index], Style);
+    if Breakpoint[Index] then
+      ilIcons.Draw(lbDisassembly.Canvas, 2, ARect.Top + ((ARect.Bottom - ARect.Top) - 16) div 2, 1, gdeNormal);
+    if ExecutedMark[Index] then
+      ilIcons.Draw(lbDisassembly.Canvas, 2, ARect.Top + ((ARect.Bottom - ARect.Top) - 16) div 2, 0, gdeNormal);
+  end;
+end;
+
+procedure TMain.lbMemoryDumpDrawItem(Control: TWinControl; Index: Integer;
+  ARect: TRect; State: TOwnerDrawState);
+var
+  Style: TTextStyle;
+begin
+  with Style do begin
+    Alignment:=taLeftJustify;
+    Layout:=tlCenter;
+    SingleLine:=True;
+    Clipping:=False;
+    ExpandTabs:=False;
+    ShowPrefix:=False;
+    Wordbreak:=False;
+    Opaque:=False;
+    SystemFont:=False;
+    RightToLeft:=False;
+  end;
+  with lbMemoryDump.Canvas do begin
+    Font.Assign(lbMemoryDump.Font);
+    if odSelected in State then begin
+      Brush.Color:=clHighlight;
+      Font.Color:=clHighlightText;
+    end else begin
+      Brush.Color:=clWindow;
+      Font.Color:=clWindowText;
+    end;
+    Pen.Color:=Brush.Color;
+    Rectangle(ARect);
+    TextRect(ARect, 2, ARect.Top + ((ARect.Bottom - ARect.Top) - TextHeight('W')) div 2,
+      HexStr(Index, 4) + ' (' + Format('%05d', [Index]) + '): ' + HexStr(CPU[Index], 4) + ' (' + Format('%05d', [CPU[Index]]) + ')',
+      Style);
+  end;
+
 end;
 
 procedure TMain.mAssemblyAssembleClick(Sender: TObject);
 begin
   btAssembleClick(Sender);
+end;
+
+procedure TMain.mAssemblyRemoveBreakpointsClick(Sender: TObject);
+var
+  I: Integer;
+begin
+  for I:=0 to High(Breakpoint) do Breakpoint[I]:=False;
+end;
+
+procedure TMain.mCPUFullResetClick(Sender: TObject);
+var
+  I: Integer;
+begin
+  Reset;
+  IgnoreFollow:=True;
+  for I:=0 to High(TMemoryAddress) do CPU[I]:=0;
+  IgnoreFollow:=False;
+  DisassembleFrom(0, High(TMemoryAddress));
+  UpdateAllMonitors;
 end;
 
 procedure TMain.mCPULoadProgramClick(Sender: TObject);
@@ -377,7 +485,7 @@ end;
 
 procedure TMain.mHelpAboutClick(Sender: TObject);
 begin
-  ShowMessage('DCPU-16 Studio version 20120405' + LineEnding + 'Copyright (C) 2012 by Kostas Michalopoulos' + LineEnding + LineEnding + 'Made using FreePascal, Lazarus and the SynEdit editor component.');
+  ShowMessage('DCPU-16 Studio version 20120406' + LineEnding + 'Copyright (C) 2012 by Kostas Michalopoulos' + LineEnding + LineEnding + 'Made using FreePascal, Lazarus and the SynEdit editor component.');
 end;
 
 procedure TMain.mHelpContentsClick(Sender: TObject);
@@ -465,12 +573,11 @@ procedure TMain.ApplicationProperties1Idle(Sender: TObject; var Done: Boolean);
 var
   CyclesToRun: Integer;
   Reg: TCPURegister;
-  I: Integer;
 begin
   Done:=False;
   NowTicks:=GetTickCount;
-  if cbRunning.Checked then begin
-    if cbCycleExact.Checked then begin
+  if Running then begin
+    if CycleExact then begin
       for Reg:=crA to crO do
         SpinEditByReg[Reg].Color:=clDefault;
       try
@@ -479,6 +586,7 @@ begin
           while CyclesToRun > 1 do begin
             CPU.RunCycle;
             Dec(CyclesToRun);
+            if not Running then Break;
           end;
           Inc(LastTicks, 10);
         end;
@@ -502,10 +610,12 @@ var
   MemDump: string;
 begin
   Ass:=TAssembler.Create;
+  IgnoreFollow:=True;
   try
     WriteMessage('Assembling...');
     Ass.Assemble(mCode.Text);
     Reset;
+    IgnoreFollow:=True;
     if Ass.Error then begin
       WriteMessage('Assembly error: ' + Ass.ErrorMessage);
       mCode.SelStart:=Ass.ErrorPos;
@@ -530,6 +640,8 @@ begin
     WriteMessage('Assembly failed due to an internal error: ' + Exception(ExceptObject).Message);
   end;
   FreeAndNil(Ass);
+  IgnoreFollow:=False;
+  UpdateAllMonitors;
 end;
 
 procedure TMain.btSingleStepClick(Sender: TObject);
@@ -539,16 +651,19 @@ begin
 end;
 
 procedure TMain.cbCycleExactChange(Sender: TObject);
-var
-  I: Integer;
 begin
   CPU.CycleExact:=cbCycleExact.Checked;
-  if cbCycleExact.Checked then begin
+  CycleExact:=CPU.CycleExact;
+  if CycleExact then begin
     LastTicks:=GetTickCount;
-    for I:=0 to High(TouchedMemory) do TouchedMemory[I]:=False;
   end else begin
     UpdateAllMonitors;
   end;
+end;
+
+procedure TMain.cbRunningChange(Sender: TObject);
+begin
+  Running:=cbRunning.Checked;
 end;
 
 procedure TMain.FormCloseQuery(Sender: TObject; var CanClose: boolean);
@@ -559,12 +674,9 @@ end;
 procedure TMain.OnMemoryChange(ASender: TObject; MemoryAddress: TMemoryAddress;
   var MemoryValue: Word);
 begin
-  if cbCycleExact.Checked then begin
-    TouchedMemory[MemoryAddress]:=True;
-    Exit;
-  end;
-  lbMemoryDump.Items[MemoryAddress]:=HexStr(MemoryAddress, 4) + ' (' + Format('%05d', [MemoryAddress]) + '): ' + HexStr(MemoryValue, 4) + ' (' + Format('%05d', [MemoryValue]) + ')';
-  if cbFollow.Checked then begin
+  if CycleExact then Exit;
+  if not IgnoreFollow then lbMemoryDump.Invalidate;
+  if cbFollow.Checked and not IgnoreFollow then begin
     lbMemoryDump.ItemIndex:=MemoryAddress;
     Application.ProcessMessages;
   end;
@@ -573,17 +685,31 @@ end;
 procedure TMain.OnRegisterChange(ASender: TObject; CPURegister: TCPURegister;
   var RegisterValue: Word);
 begin
-  if cbCycleExact.Checked then Exit;
-  SpinEditByReg[CPURegister].Value:=RegisterValue;
-  SpinEditByReg[CPURegister].Color:=clYellow;
+  if not CycleExact then begin
+    SpinEditByReg[CPURegister].Value:=RegisterValue;
+    SpinEditByReg[CPURegister].Color:=clYellow;
+  end;
   if CPURegister=crPC then begin
-    if cbFollow.Checked and (InstructionAddresses[RegisterValue] >= 0) and (InstructionAddresses[RegisterValue] < lbDisassembly.Count) then
-      lbDisassembly.ItemIndex:=InstructionAddresses[RegisterValue];
-    if CPU.SkipInstruction then
-      lbNextInstructionState.Caption:='The next will instruction will be skipped'
-    else
-      lbNextInstructionState.Caption:='The next will instruction will be executed';
-    lbLastCycles.Caption:='Last instruction cycles: ' + IntToStr(CPU.Cycles);
+    if not CycleExact then begin
+      if CPU.SkipInstruction then
+        lbNextInstructionState.Caption:='The next will instruction will be skipped'
+      else
+        lbNextInstructionState.Caption:='The next will instruction will be executed';
+      lbLastCycles.Caption:='Last instruction cycles: ' + IntToStr(CPU.Cycles);
+    end;
+    if InstructionAddresses[RegisterValue] <> -1 then begin
+      ExecutedMark[InstructionAddresses[RegisterValue]]:=True;
+      if not CycleExact then begin
+        if cbFollow.Checked and not IgnoreFollow and (InstructionAddresses[RegisterValue] < lbDisassembly.Count) then
+          lbDisassembly.ItemIndex:=InstructionAddresses[RegisterValue];
+      end;
+      if Breakpoint[InstructionAddresses[RegisterValue]] then begin
+        WriteMessage('Breakpoint at ' + HexStr(RegisterValue, 4));
+        UpdateAllMonitors;
+        cbRunning.Checked:=False;
+        cbCycleExact.Checked:=False;
+      end;
+    end;
   end;
 end;
 
@@ -597,13 +723,11 @@ begin
   while Address <= EndAddress do begin
     InstructionAddresses[Address]:=I;
     StartAddress:=Address;
-    if lbDisassembly.Count <= I then
-      lbDisassembly.Items.Add(HexStr(Address, 4) + ': ' + CPU.DisassembleInstructionAt(Address))
-    else
-      lbDisassembly.Items[I]:=HexStr(Address, 4) + ': ' + CPU.DisassembleInstructionAt(Address);
+    DisassembledLines[I]:=HexStr(Address, 4) + ': ' + CPU.DisassembleInstructionAt(Address);
     Inc(I);
     if StartAddress >= Address then Break;
   end;
+  UpdateAllMonitors;
 end;
 
 procedure TMain.SetFileName(const AValue: string);
@@ -619,7 +743,6 @@ end;
 procedure TMain.SingleStep;
 var
   Reg: TCPURegister;
-  I: Integer;
 begin
   for Reg:=crA to crO do
     SpinEditByReg[Reg].Color:=clDefault;
@@ -636,20 +759,24 @@ end;
 
 procedure TMain.Reset;
 var
-  I: TCPURegister;
+  Reg: TCPURegister;
+  I: Integer;
 begin
+  IgnoreFollow:=True;
   WriteMessage('Resetting');
   LastTicks:=GetTickCount;
+  for I:=0 to High(ExecutedMark) do ExecutedMark[I]:=False;
   CPU.Reset;
-  for I:=crA to crO do begin
-    PrevRegValues[I]:=CPU.CPURegister[I];
-    SpinEditByReg[I].Color:=clDefault;
+  for Reg:=crA to crO do begin
+    PrevRegValues[Reg]:=CPU.CPURegister[Reg];
+    SpinEditByReg[Reg].Color:=clDefault;
   end;
   cbRunning.Checked:=False;
   if lbDisassembly.Items.Count > 0 then lbDisassembly.ItemIndex:=0;
   lbMemoryDump.ItemIndex:=0;
   LastKnownProgramSize:=$FFFF;
   WriteMessage('Reset done');
+  IgnoreFollow:=False;
 end;
 
 procedure TMain.DrawScreen;
@@ -717,19 +844,17 @@ end;
 procedure TMain.UpdateAllMonitors;
 var
   Reg: TCPURegister;
-  I: Integer;
 begin
   for Reg:=crA to crO do
     SpinEditByReg[Reg].Value:=CPU.CPURegister[Reg];
-  for I:=0 to High(TouchedMemory) do
-    if TouchedMemory[I] then begin
-      lbMemoryDump.Items[I]:=HexStr(I, 4) + ' (' + Format('%05d', [I]) + '): ' + HexStr(CPU[I], 4) + ' (' + Format('%05d', [CPU[I]]) + ')';
-    end;
+  lbDisassembly.Invalidate;
+  lbMemoryDump.Invalidate;
+  pbScreen.Repaint;
+  if InstructionAddresses[CPU.CPURegister[crPC]] > -1 then
+    lbDisassembly.ItemIndex:=InstructionAddresses[CPU.CPURegister[crPC]];
 end;
 
 procedure TMain.KeyWasTyped(Ch: Char);
-var
-  I: Integer;
 begin
   if CPU[KeyboardAddress]=0 then CPU[KeyboardAddress]:=Ord(Ch) else Beep;
 end;
