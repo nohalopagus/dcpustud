@@ -9,6 +9,10 @@ uses
   Spin, ExtCtrls, Menus, DCPU16, LazHelp, SynEdit, SynCompletion,
   SynHighlighterAny, GraphType, LCLIntf;
 
+const
+  VideoStart = $8000;
+  KeyboardAddress = $9000;
+
 type
 
   TFontChar = bitpacked array [0..3, 0..7] of Boolean;
@@ -54,6 +58,10 @@ type
     mCPULoadProgram: TMenuItem;
     mCPUBar2: TMenuItem;
     mCPUUseBigEndianWords: TMenuItem;
+    mViewClearMessages: TMenuItem;
+    mViewBar1: TMenuItem;
+    mViewUserScreen: TMenuItem;
+    mView: TMenuItem;
     mFileNew: TMenuItem;
     mFileOpen: TMenuItem;
     mFileSave: TMenuItem;
@@ -113,6 +121,8 @@ type
     procedure mFileSaveClick(Sender: TObject);
     procedure mHelpAboutClick(Sender: TObject);
     procedure mHelpContentsClick(Sender: TObject);
+    procedure mViewClearMessagesClick(Sender: TObject);
+    procedure mViewUserScreenClick(Sender: TObject);
     procedure pbScreenPaint(Sender: TObject);
     procedure seAChange(Sender: TObject);
     procedure seBChange(Sender: TObject);
@@ -146,6 +156,7 @@ type
     function ConfirmOk: Boolean;
     procedure UpdateAllMonitors;
   public
+    procedure KeyWasTyped(Ch: Char);
     property CPU: TCPU read FCPU;
     property FileName: string read FFileName write SetFileName;
   end; 
@@ -156,6 +167,9 @@ var
 procedure WriteMessage(AMsg: string);
 
 implementation
+
+uses
+  UserScreenUnit;
 
 procedure WriteMessage(AMsg: string);
 begin
@@ -371,6 +385,17 @@ begin
   LazHelpWindowedViewer1.ShowHelp;
 end;
 
+procedure TMain.mViewClearMessagesClick(Sender: TObject);
+begin
+  mMessages.Text:='';
+end;
+
+procedure TMain.mViewUserScreenClick(Sender: TObject);
+begin
+  UserScreen.Visible:=True;
+  UserScreen.BringToFront;
+end;
+
 procedure TMain.pbScreenPaint(Sender: TObject);
 begin
   DrawScreen;
@@ -480,23 +505,25 @@ begin
   try
     WriteMessage('Assembling...');
     Ass.Assemble(mCode.Text);
+    Reset;
     if Ass.Error then begin
       WriteMessage('Assembly error: ' + Ass.ErrorMessage);
       mCode.SelStart:=Ass.ErrorPos;
       mCode.SetFocus;
+      MessageDlg('Error in code', Ass.ErrorMessage, mtError, [mbOK], 0);
+    end else begin
+      MemDump:='Memory Dump:' + LineEnding + '  0000:';
+      for I:=0 to Ass.Size - 1 do begin
+        MemDump:=MemDump + ' ' + HexStr(Ass[I], 4);
+        if (I and 7)=7 then
+          MemDump:=MemDump + LineEnding + '  ' + HexStr(I + 1, 4) + ':';
+        CPU[I]:=Ass[I];
+      end;
+      WriteMessage(MemDump);
+      WriteMessage('Symbol Map:');
+      for I:=0 to Ass.SymbolCount - 1 do
+        WriteMessage('  ' + HexStr(Ass.Symbols[I].Address, 4) + '  ' + Ass.Symbols[I].Name);
     end;
-    Reset;
-    MemDump:='Memory Dump:' + LineEnding + '  0000:';
-    for I:=0 to Ass.Size - 1 do begin
-      MemDump:=MemDump + ' ' + HexStr(Ass[I], 4);
-      if (I and 7)=7 then
-        MemDump:=MemDump + LineEnding + '  ' + HexStr(I + 1, 4) + ':';
-      CPU[I]:=Ass[I];
-    end;
-    WriteMessage(MemDump);
-    WriteMessage('Symbol Map:');
-    for I:=0 to Ass.SymbolCount - 1 do
-      WriteMessage('  ' + HexStr(Ass.Symbols[I].Address, 4) + '  ' + Ass.Symbols[I].Name);
     DisassembleFrom(0, Ass.Size);
     LastKnownProgramSize:=Ass.Size;
   except
@@ -669,7 +696,7 @@ begin
   ScreenBitmap.BeginUpdate(False);
   Raw:=ScreenBitmap.RawImage;
   PixelBuffer:=PColor(Raw.Data);
-  Addr:=$8000;
+  Addr:=VideoStart;
   for Y:=0 to 15 do
     for X:=0 to 31 do begin
       DrawChar(X*4, Y*8, CPU[Addr]);
@@ -678,6 +705,7 @@ begin
   ScreenBitmap.EndUpdate(False);
   //pbScreen.Canvas.CopyRect(Rect(0, 0, 128, 128), ScreenBitmap.Canvas, Rect(0, 0, 128, 128));
   pbScreen.Canvas.Draw(0, 0, ScreenBitmap);
+  if UserScreen.Visible then UserScreen.pbScr.Canvas.StretchDraw(Rect(0, 0, 511, 511), ScreenBitmap);
 end;
 
 function TMain.ConfirmOk: Boolean;
@@ -697,6 +725,13 @@ begin
     if TouchedMemory[I] then begin
       lbMemoryDump.Items[I]:=HexStr(I, 4) + ' (' + Format('%05d', [I]) + '): ' + HexStr(CPU[I], 4) + ' (' + Format('%05d', [CPU[I]]) + ')';
     end;
+end;
+
+procedure TMain.KeyWasTyped(Ch: Char);
+var
+  I: Integer;
+begin
+  if CPU[KeyboardAddress]=0 then CPU[KeyboardAddress]:=Ord(Ch) else Beep;
 end;
 
 end.

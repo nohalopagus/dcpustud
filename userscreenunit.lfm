@@ -1,0 +1,26 @@
+object UserScreen: TUserScreen
+  Left = 374
+  Height = 518
+  Top = 213
+  Width = 514
+  AutoSize = True
+  BorderIcons = [biSystemMenu, biMinimize]
+  BorderStyle = bsSingle
+  Caption = 'User Screen'
+  ClientHeight = 518
+  ClientWidth = 514
+  OnKeyDown = FormKeyDown
+  OnKeyPress = FormKeyPress
+  LCLVersion = '0.9.30.4'
+  object pbScr: TPaintBox
+    Left = 0
+    Height = 512
+    Top = 0
+    Width = 512
+    Constraints.MaxHeight = 512
+    Constraints.MaxWidth = 512
+    Constraints.MinHeight = 512
+    Constraints.MinWidth = 512
+    OnPaint = pbScrPaint
+  end
+end

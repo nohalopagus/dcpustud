@@ -7,7 +7,7 @@ uses
   cthreads,
   {$ENDIF}{$ENDIF}
   Interfaces, // this includes the LCL widgetset
-  Forms, MainUnit, DCPU16, lazhelppackage;
+  Forms, MainUnit, DCPU16, lazhelppackage, UserScreenUnit;
 
 {$R *.res}
 {$IFDEF WINDOWS}
@@ -18,6 +18,7 @@ begin
   Application.Title:='DCPU-16 Studio';
   Application.Initialize;
   Application.CreateForm(TMain, Main);
+  Application.CreateForm(TUserScreen, UserScreen);
   Application.Run;
 end.
 

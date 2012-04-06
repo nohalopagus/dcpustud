@@ -1405,6 +1405,20 @@ object Main: TMain
         OnClick = mFileQuitClick
       end
     end
+    object mView: TMenuItem
+      Caption = '&View'
+      object mViewUserScreen: TMenuItem
+        Caption = 'User Screen'
+        OnClick = mViewUserScreenClick
+      end
+      object mViewBar1: TMenuItem
+        Caption = '-'
+      end
+      object mViewClearMessages: TMenuItem
+        Caption = '&Clear Messages'
+        OnClick = mViewClearMessagesClick
+      end
+    end
     object mCPU: TMenuItem
       Caption = '&CPU'
       object mCPUReset: TMenuItem

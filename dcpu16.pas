@@ -609,7 +609,7 @@ var
     else if AValue in [$20..$3F] then
       Result:=AValue - $20
     else case AValue of
-      $18: begin
+      $18: if not SkipInstruction then begin
         Result:=Memory[CPURegister[crSP]];
         if CPURegister[crSP]=$FFFF then
           CPURegister[crSP]:=0
@@ -617,7 +617,7 @@ var
           CPURegister[crSP]:=CPURegister[crSP] + 1;
       end;
       $19: Result:=Memory[CPURegister[crSP]];
-      $1A: begin
+      $1A: if not SkipInstruction then begin
         if CPURegister[crSP]=$0 then
           CPURegister[crSP]:=$FFFF
         else
@@ -644,7 +644,7 @@ var
     else if AValue in [$20..$3F] then
       raise EDCPU16Exception.Create('Instruction at ' + HexStr(CPURegister[crPC] - 1, 4) + ' tried to write to a literal value')
     else case AValue of
-      $18: begin
+      $18: if not SkipInstruction then begin
         Result:=CPURegister[crSP];
         if CPURegister[crSP]=$FFFF then
           CPURegister[crSP]:=0
@@ -652,7 +652,7 @@ var
           CPURegister[crSP]:=CPURegister[crSP] + 1;
       end;
       $19: Result:=CPURegister[crSP];
-      $1A: begin
+      $1A: if not SkipInstruction then begin
         if CPURegister[crSP]=$0 then
           CPURegister[crSP]:=$FFFF
         else
