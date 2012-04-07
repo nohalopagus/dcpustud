@@ -561,7 +561,7 @@ end;
 
 function TCPU.GetMemory(Address: TMemoryAddress): Word;
 begin
-  Result:=ResourceMemory[Address];
+  Result:=ResourceMemory[Address and $FFFF];
 end;
 
 procedure TCPU.SetCPURegister(Reg: TCPURegister; const AValue: Word);
@@ -571,7 +571,7 @@ end;
 
 procedure TCPU.SetMemory(Address: TMemoryAddress; const AValue: Word);
 begin
-  ResourceMemory[Address]:=AValue;
+  ResourceMemory[Address and $FFFF]:=AValue;
 end;
 
 procedure TCPU.SetResourceMemory(Address: TResourceAddress; const AValue: Word);
@@ -640,7 +640,7 @@ var
     else if AValue in [$08..$0F] then
       Result:=CPURegister[TCPURegister(AValue - $08)]
     else if AValue in [$10..$17] then
-      Result:=FetchNextWord + CPURegister[TCPURegister(AValue - $10)]
+      Result:=(FetchNextWord + CPURegister[TCPURegister(AValue - $10)]) and $FFFF
     else if AValue in [$20..$3F] then
       raise EDCPU16Exception.Create('Instruction at ' + HexStr(CPURegister[crPC] - 1, 4) + ' tried to write to a literal value')
     else case AValue of
