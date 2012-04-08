@@ -1,0 +1,170 @@
+Build Instructions
+==================
+
+  1. Prerequisites
+  2. Install FreePascal and Lazarus
+  3. Build DCPU-16 Studio
+
+
+1. Prerequisites
+----------------
+
+  1. The latest version of Lazarus from http://lazarus.freepascal.org/
+     If you are under Linux download the source code instead of any of the
+     binary releases
+  2. Under Linux the latest version of FreePascal associated with Lazarus
+     (see the Windows version installer's filename for the proper version)
+     It is recommended to get the distribution-agnostic version that uses an
+     installation script.
+  4. Under Linux you also need the source code of the FreePascal version you
+     got, even if you are not going to compile it
+  5. Under Linux you need to have GCC, the development libraries for X11
+     and GTK (and their own requirements, such as GDK, Cairo, etc) and
+     related development tools (like binutils, make, etc)
+  6. LazHelp source from https://github.com/badsector/lazhelp
+
+  At the moment these are 2.6.0 for FreePascal and 0.9.30.4 for Lazarus
+
+
+2. Install FreePascal and Lazarus
+---------------------------------
+
+  Windows:
+    Simply run the installer you downloaded from the download site above.
+    It contains both FreePascal and Lazarus in their proper locations.  Do
+    *not* change the default directory (C:\lazarus) although you can change
+    the default drive letter (e.g. D:\lazarus).  Some programs might dislike
+    spaces or non-ASCII characters in directory names.
+
+  Linux:
+    1. Install FreePascal using either your distribution's package manager
+       (if it contains the required version) or the installer script (if you
+       got the version i wrote above).  If you use the installer script you
+       may want to use /usr/local instead of the default /usr as the target
+       directory for the FreePascal files, but make sure that your system is
+       configured to see files under /usr/local/bin and relevant directories.
+       Make sure the installation is properly made by compiling the following
+       program:
+
+         program hello;
+         begin
+           writeln('hello, world!');
+         end;
+
+      save it as hello.pas and type fpc hello.  Then type ./hello and if the
+      compiler was installed properly, you'll see the greeting
+
+    2. Extract the source code of Lazarus somewhere (f.e. ~/Apps/lazarus) and
+       enter its directory from the command line.  Make sure all of the
+       development requirements are met (make, gtk dev libs, x11 dev libs,
+       etc) and type make to build the program (it may take from few seconds
+       to a couple of minutes, depending on your system).  Do not run the
+       program yet!
+
+    3. Extract the source code of FreePascal somewhere (f.e. ~/Code/fpc)
+
+    4. Go to the Lazarus directory and type ./startlazarus.  The program will
+       ask you for the directory where the FreePascal source code is placed.
+       Enter the full path to the directory where you extracted the sources
+
+    5. (optional) Line up the windows, the default layout is terrible with all
+       windows overlapping each other :-P
+
+    6. Test the installation a bit: place a couple of buttons on the default
+       form and hit F9 (or click on the "play" button).  If everything was
+       properly installed, the program will compile and run the default
+       program and show a form with the buttons
+
+  Important: while many distributions include both FreePascal and Lazarus in
+             their repositores, most of them do not package the files properly
+             and they do not fully work out of the box.  Lazarus requires that
+             all of its files and directories are writeable (every time you
+             install a new component, the lazarus executable is rewritten and
+             some of the units/libraries might be rebuilt) but most distros
+             do not set permissions properly for users to be able to do that.
+
+             It is highly recommended to avoid using the prepackaged Lazarus
+             version from a distribution and prefer to build it from source
+             (it really is just a matter of typing make and waiting a few
+             seconds).  I am not kidding - just yesterday i was helping a guy
+             from IRC to build DCPU-16 Studio and he ignored this and hit the
+             issue i mention above.
+  
+             FreePascal is usually installed just fine, but some distributions
+             might break it in too many packages so you'll need to install all
+             of them to get the full of FCL (the Free Component Library that
+             is required by Lazarus).
+
+
+3. Build DCPU-16 Studio
+-----------------------
+
+  1. Before DCPU-16 Studio, you need to build LazHelp.  Run Lazarus and from
+     the Package menu select Open package file (.lpk).  Use the file browser
+     that will appear to browse to the directory where you have placed the
+     source code of LazHelp and select the lazhelppackage.lpk file.  In the
+     window that will appear click on the Install button in the toolbar.  It
+     will give you a list of the packages that the system has and tell you
+     that it will build LazHelp.  Proceed to build LazHelp.
+
+     Important: this will cause Lazarus to rebuild itself.  You need to make
+                sure that the Lazarus directory is writable by Lazarus and
+                your user account.  Under Windows this shouldn't be a problem
+                if you installed to the default location, even if you have UAC
+                enabled.  Under Linux it *will* be a problem if you used a
+                prepackaged version from your distribution and haven't followed
+                the advice i gave in the previous section.  No i am not
+                kidding, i have seen this happen all the time that it isn't
+                even funny.
+
+  2. Once Lazarus has rebuilt itself (assuming it can rebuild itself, see the
+     Important parts above), you can open the DCPU-16 Studio file.  From the
+     Project menu select Open project... and using the file browser that will
+     appear select the dcpustud.lpi file from the DCPU-16 Studio source code
+     files
+
+  3. Assuming everything was set up and installed properly, the program's
+     files will open without problem.  If something was missing (like the
+     LazHelp package) an error window will appear.  At this point select Stop
+     loading, close the application (Project -> New project... -> Application) 
+     without saving anything and read the above to figure out what may have
+     gone wrong (hint: make sure your Lazarus installation does not come from
+     your distribution's repositories)
+
+  4. If you have a Lazarus version less than 0.9.30.4:
+     4a. Not recommended to stay in the past, update to at least 0.9.30.4 or
+         any later version that might be available.  0.9.30.4 has a lot of bug
+         fixes, including some that fix crashes under Ubuntu and other Linux
+         systems
+     4b. If you still want to stay with the old version and assuming that the
+         project file opened properly go to the MainUnit.pas unit and from the
+         TMain.FormCreate method comment out the lines that change ScrollWidth
+
+  5. From the Run menu select Build all.
+
+  6. Press F9 (or the Play button) to run.
+
+  7. (optional) For debugging you may want to make sure that the "Default"
+     configuration is active instead of the "Release" configuration.  The
+     Default configuration enables additional runtime checks, disables
+     optimizations, adds symbol information and line number information for
+     backtraces, etc but slows down the program a bit.
+
+     To change the active configuration click on the arrow between the gear
+     icon and the play icon in the toolbar or from the Project menu select
+     Project options -> Compiler Options -> Build modes and check the checkbox
+     at the left side of the Default build mode on the panel at the right.
+
+  8. (optional) If you want to distribute your build:
+     8a. Under Windows all you need is the dcpustud.exe file
+     8b. Under Linux you need the dcpustud file *and* the fontdata.fda file
+     Note: if the executable file is obscenely large (like 20MB or so), you
+           have made a debug/Default build.  Use the method from #7 above to
+           select the Release build and from Run select Build all.  Lazarus
+           executables *are* big though (Release builds for Linux are around
+           4MB) so you probably want to use an archive with a good compression
+           algorithm (like LZMA) for distributing it
+
+
+For updates, etc check https://github.com/badsector/lazhelp
+
