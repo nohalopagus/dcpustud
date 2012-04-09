@@ -499,7 +499,7 @@ end;
 
 procedure TMain.mHelpAboutClick(Sender: TObject);
 begin
-  ShowMessage('DCPU-16 Studio version 20120406' + LineEnding + 'Copyright (C) 2012 by Kostas Michalopoulos' + LineEnding + LineEnding + 'Made using FreePascal, Lazarus and the SynEdit editor component.');
+  ShowMessage('DCPU-16 Studio version 20120409' + LineEnding + 'Copyright (C) 2012 by Kostas Michalopoulos' + LineEnding + LineEnding + 'Made using FreePascal, Lazarus and the SynEdit editor component.');
 end;
 
 procedure TMain.mHelpContentsClick(Sender: TObject);
@@ -927,4 +927,4 @@ begin
 end;
 
 end.
-
+
