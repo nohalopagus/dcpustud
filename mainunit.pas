@@ -18,6 +18,12 @@ type
   TFontChar = bitpacked array [0..3, 0..7] of Boolean;
   TSmallFont = array [0..127] of TFontChar;
 
+  TDataSymbol = record
+    Name: string;
+    Index: Integer;
+    Addr: TMemoryAddress;
+  end;
+
   { TMain }
 
   TMain = class(TForm)
@@ -29,6 +35,7 @@ type
     cbFollow: TCheckBox;
     cbCycleExact: TCheckBox;
     ilIcons: TImageList;
+    lbDataSymbolsLabel: TLabel;
     lbScreen: TLabel;
     LazHelp1: TLazHelp;
     LazHelpWindowedViewer1: TLazHelpWindowedViewer;
@@ -53,6 +60,7 @@ type
     lbI: TLabel;
     lbDisassembly: TListBox;
     lbMemoryDump: TListBox;
+    lbDataSymbols: TListBox;
     MainMenu1: TMainMenu;
     mCPUBar1: TMenuItem;
     mCPUSaveProgram: TMenuItem;
@@ -160,14 +168,18 @@ type
     CycleExact: Boolean;
     Running: Boolean;
     IgnoreFollow: Boolean;
+    DataSymbols: array of TDataSymbol;
+    LastBreakpointAddr: Integer;
     procedure OnMemoryChange(ASender: TObject; MemoryAddress: TMemoryAddress; var MemoryValue: Word);
     procedure OnRegisterChange(ASender: TObject; CPURegister: TCPURegister; var RegisterValue: Word);
+    function OnBeforeExecution(ASender: TObject; MemoryAddress: TMemoryAddress): Boolean;
     procedure DisassembleFrom(Address, EndAddress: TMemoryAddress);
     procedure SetFileName(const AValue: string);
     procedure SingleStep;
     procedure Reset;
     procedure DrawScreen;
     function ConfirmOk: Boolean;
+    procedure UpdateDataSymbols;
     procedure UpdateAllMonitors;
   public
     procedure KeyWasTyped(Ch: Char);
@@ -228,6 +240,7 @@ begin
   LoadFont;
   lbDisassembly.ScrollWidth:=0;
   lbMemoryDump.ScrollWidth:=0;
+  lbDataSymbols.ScrollWidth:=1024;
   ScreenBitmap:=TBitmap.Create;
   ScreenBitmap.PixelFormat:=pf32bit;
   ScreenBitmap.SetSize(128, 128);
@@ -246,6 +259,7 @@ begin
   {$IFDEF WINDOWS}
   lbDisassembly.Font.Name:='FixedSys';
   lbMemoryDump.Font.Name:='FixedSys';
+  lbDataSymbols.Font.Name:='FixedSys';
   mMessages.Font.Name:='FixedSys';
   mCode.Font.Name:='FixedSys';
   mCode.ExtraCharSpacing:=-1;
@@ -262,6 +276,7 @@ begin
   FCPU:=TCPU.Create(Self);
   CPU.OnMemoryChange:=@OnMemoryChange;
   CPU.OnRegisterChange:=@OnRegisterChange;
+  CPU.OnBeforeExecution:=@OnBeforeExecution;
   LastKnownProgramSize:=$FFFF;
   Reset;
   DisassembleFrom(0, $FFFF);
@@ -475,7 +490,6 @@ begin
   end;
   try
     mCode.Lines.SaveToFile(FileName);
-    FileName:=sdCode.FileName;
     mCode.MarkTextAsSaved;
     mCode.Modified:=False;
   except
@@ -589,6 +603,7 @@ begin
             if not Running then Break;
           end;
           Inc(LastTicks, 10);
+          if not Running then Break;
         end;
       except
         on EDCPU16Exception do begin
@@ -631,9 +646,20 @@ begin
       end;
       WriteMessage(MemDump);
       WriteMessage('Symbol Map:');
-      for I:=0 to Ass.SymbolCount - 1 do
-        WriteMessage('  ' + HexStr(Ass.Symbols[I].Address, 4) + '  ' + Ass.Symbols[I].Name);
+      SetLength(DataSymbols, 0);
+      for I:=0 to Ass.SymbolCount - 1 do begin
+        if Ass.Symbols[I].ForData then begin
+          WriteMessage('  ' + HexStr(Ass.Symbols[I].Address, 4) + '  ' + Ass.Symbols[I].Name + ' (data)');
+          SetLength(DataSymbols, Length(DataSymbols) + 1);
+          with DataSymbols[High(DataSymbols)] do begin
+            Name:=Ass.Symbols[I].Name;
+            Addr:=Ass.Symbols[I].Address;
+          end;
+        end else
+          WriteMessage('  ' + HexStr(Ass.Symbols[I].Address, 4) + '  ' + Ass.Symbols[I].Name + ' (code)');
+      end;
     end;
+    UpdateDataSymbols;
     DisassembleFrom(0, Ass.Size);
     LastKnownProgramSize:=Ass.Size;
   except
@@ -673,9 +699,19 @@ end;
 
 procedure TMain.OnMemoryChange(ASender: TObject; MemoryAddress: TMemoryAddress;
   var MemoryValue: Word);
+var
+  I: Integer;
 begin
   if CycleExact then Exit;
-  if not IgnoreFollow then lbMemoryDump.Invalidate;
+  if not IgnoreFollow then begin
+    lbMemoryDump.Invalidate;
+    for I:=0 to High(DataSymbols) do
+      with DataSymbols[I] do
+        if Addr=MemoryAddress then begin
+          lbDataSymbols.Items[Index]:=HexStr(Addr, 4) + ': ' + Name + ' = ' + HexStr(MemoryValue, 4) + ' (' + IntToStr(MemoryValue) + ')';
+          if cbFollow.Checked then lbDataSymbols.ItemIndex:=Index;
+        end;
+  end;
   if cbFollow.Checked and not IgnoreFollow then begin
     lbMemoryDump.ItemIndex:=MemoryAddress;
     Application.ProcessMessages;
@@ -691,24 +727,40 @@ begin
   end;
   if CPURegister=crPC then begin
     if not CycleExact then begin
-      if CPU.SkipInstruction then
-        lbNextInstructionState.Caption:='The next will instruction will be skipped'
-      else
-        lbNextInstructionState.Caption:='The next will instruction will be executed';
-      lbLastCycles.Caption:='Last instruction cycles: ' + IntToStr(CPU.Cycles);
-    end;
-    if InstructionAddresses[RegisterValue] <> -1 then begin
-      ExecutedMark[InstructionAddresses[RegisterValue]]:=True;
-      if not CycleExact then begin
-        if cbFollow.Checked and not IgnoreFollow and (InstructionAddresses[RegisterValue] < lbDisassembly.Count) then
-          lbDisassembly.ItemIndex:=InstructionAddresses[RegisterValue];
+      if cbFollow.Checked and not IgnoreFollow and (InstructionAddresses[RegisterValue] < lbDisassembly.Count) then begin
+        lbDisassembly.ItemIndex:=InstructionAddresses[RegisterValue];
+        lbDisassembly.Invalidate;
       end;
-      if Breakpoint[InstructionAddresses[RegisterValue]] then begin
-        WriteMessage('Breakpoint at ' + HexStr(RegisterValue, 4));
+    end;
+  end;
+end;
+
+function TMain.OnBeforeExecution(ASender: TObject; MemoryAddress: TMemoryAddress): Boolean;
+begin
+  Result:=True;
+  if not CycleExact then begin
+    if CPU.SkipInstruction then
+      lbNextInstructionState.Caption:='The next instruction will be skipped'
+    else
+      lbNextInstructionState.Caption:='The next instruction will be executed';
+    lbLastCycles.Caption:='Last instruction cycles: ' + IntToStr(CPU.Cycles);
+  end;
+  if InstructionAddresses[MemoryAddress] <> -1 then begin
+    if not CPU.SkipInstruction then begin
+      if Breakpoint[InstructionAddresses[MemoryAddress]] and (LastBreakpointAddr <> MemoryAddress) then begin
+        LastBreakpointAddr:=MemoryAddress;
+        WriteMessage('Breakpoint at ' + HexStr(MemoryAddress, 4));
         UpdateAllMonitors;
         cbRunning.Checked:=False;
         cbCycleExact.Checked:=False;
-      end;
+        if InstructionAddresses[MemoryAddress] < lbDisassembly.Count then
+          lbDisassembly.ItemIndex:=InstructionAddresses[MemoryAddress];
+        Running:=False;
+        CycleExact:=False;
+        BringToFront;
+        Result:=False;
+      end else
+        ExecutedMark[InstructionAddresses[MemoryAddress]]:=True;
     end;
   end;
 end;
@@ -762,6 +814,7 @@ var
   Reg: TCPURegister;
   I: Integer;
 begin
+  LastBreakpointAddr:=-1;
   IgnoreFollow:=True;
   WriteMessage('Resetting');
   LastTicks:=GetTickCount;
@@ -777,6 +830,7 @@ begin
   LastKnownProgramSize:=$FFFF;
   WriteMessage('Reset done');
   IgnoreFollow:=False;
+  UpdateAllMonitors;
 end;
 
 procedure TMain.DrawScreen;
@@ -841,6 +895,18 @@ begin
   Result:=MessageDlg('Modified', 'The code has been modified. If you continue you will lose the modifications. Do you really want to continue and lose them?', mtConfirmation, mbYesNo, 0)=mrYes;
 end;
 
+procedure TMain.UpdateDataSymbols;
+var
+  I: Integer;
+begin
+  lbDataSymbols.Clear;
+  for I:=0 to High(DataSymbols) do
+    with DataSymbols[I] do begin
+      Index:=I;
+      lbDataSymbols.Items.Add(HexStr(Addr, 4) + ': ' + Name + ' = ' + HexStr(CPU[Addr], 4) + ' (' + IntToStr(CPU[Addr]) + ')');
+  end;
+end;
+
 procedure TMain.UpdateAllMonitors;
 var
   Reg: TCPURegister;
@@ -849,6 +915,7 @@ begin
     SpinEditByReg[Reg].Value:=CPU.CPURegister[Reg];
   lbDisassembly.Invalidate;
   lbMemoryDump.Invalidate;
+  lbDataSymbols.Invalidate;
   pbScreen.Repaint;
   if InstructionAddresses[CPU.CPURegister[crPC]] > -1 then
     lbDisassembly.ItemIndex:=InstructionAddresses[CPU.CPURegister[crPC]];

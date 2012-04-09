@@ -19,6 +19,7 @@ type
 
   TMemoryChangeNotify = procedure(ASender: TObject; MemoryAddress: TMemoryAddress; var MemoryValue: Word) of object;
   TRegisterChangeNotify = procedure(ASender: TObject; CPURegister: TCPURegister; var RegisterValue: Word) of object;
+  TBeforeExecutionNotify = function(ASender: TObject; MemoryAddress: TMemoryAddress): Boolean of object;
 
   { TCPU }
 
@@ -26,6 +27,7 @@ type
   private
     FCycleExact: Boolean;
     FCycles: Integer;
+    FOnBeforeExecution: TBeforeExecutionNotify;
     FResourceMemory: TResourceMemory;
     FOnMemoryChange: TMemoryChangeNotify;
     FOnRegisterChange: TRegisterChangeNotify;
@@ -54,6 +56,7 @@ type
     property CPURegister[Reg: TCPURegister]: Word read GetCPURegister write SetCPURegister;
     property OnMemoryChange: TMemoryChangeNotify read FOnMemoryChange write FOnMemoryChange;
     property OnRegisterChange: TRegisterChangeNotify read FOnRegisterChange write FOnRegisterChange;
+    property OnBeforeExecution: TBeforeExecutionNotify read FOnBeforeExecution write FOnBeforeExecution;
     property SkipInstruction: Boolean read FSkipInstruction;
     property CycleExact: Boolean read FCycleExact write FCycleExact;
     property Cycles: Integer read FCycles;
@@ -63,6 +66,8 @@ type
   TNameAddr = record
     Name: string;
     Address: TMemoryAddress;
+    CodePos: Integer;
+    ForData: Boolean;
   end;
 
   { TAssembler }
@@ -77,8 +82,10 @@ type
     FErrorPos: Integer;
     FSymbols: array of TNameAddr;
     Fixups: array of TNameAddr;
-    procedure AddSymbol(AName: string; Addr: TMemoryAddress);
-    procedure AddFixup(AName: string; Addr: TMemoryAddress);
+    TokenHead: Integer;
+    DataSymbol: Boolean;
+    procedure AddSymbol(AName: string; CodePos: Integer; Addr: TMemoryAddress);
+    procedure AddFixup(AName: string; CodePos: Integer; Addr: TMemoryAddress);
     procedure AddWord(W: Word);
     function GetOpCodes(AIndex: TMemoryAddress): Word; inline;
     function GetSize: TMemoryAddress; inline;
@@ -125,13 +132,15 @@ end;
 
 { TAssembler }
 
-procedure TAssembler.AddSymbol(AName: string; Addr: TMemoryAddress);
+procedure TAssembler.AddSymbol(AName: string; CodePos: Integer; Addr: TMemoryAddress);
 var
   I: Integer;
 begin
   SetLength(FSymbols, Length(FSymbols) + 1);
   FSymbols[High(FSymbols)].Name:=AName;
   FSymbols[High(FSymbols)].Address:=Addr;
+  FSymbols[High(FSymbols)].CodePos:=CodePos;
+  FSymbols[High(FSymbols)].ForData:=False;
   for I:=0 to High(Fixups) do
     if Fixups[I].Name=AName then begin
       Fixups[I].Name:='';
@@ -139,11 +148,12 @@ begin
     end;
 end;
 
-procedure TAssembler.AddFixup(AName: string; Addr: TMemoryAddress);
+procedure TAssembler.AddFixup(AName: string; CodePos: Integer; Addr: TMemoryAddress);
 begin
   SetLength(Fixups, Length(Fixups) + 1);
   Fixups[High(Fixups)].Name:=AName;
   Fixups[High(Fixups)].Address:=Addr;
+  Fixups[High(Fixups)].CodePos:=CodePos;
 end;
 
 procedure TAssembler.AddWord(W: Word);
@@ -200,6 +210,7 @@ function TAssembler.NextToken: string;
 begin
   Result:='';
   SkipSpaces;
+  TokenHead:=Head;
   while (Head <= Len) and (Code[Head] in SymbolCharacter) do begin
     Result:=Result + UpCase(Code[Head]);
     Inc(Head);
@@ -242,13 +253,22 @@ var
 begin
   Inc(Head);
   LabelName:=NextToken;
-  AddSymbol(LabelName, Size);
+  AddSymbol(LabelName, TokenHead, Size);
+  DataSymbol:=True;
 end;
 
 procedure TAssembler.AssembleData;
 var
   Ch: Char;
+  Token: string;
+  Reg: TCPURegister;
+  Found: Boolean;
+  I: Integer;
 begin
+  if DataSymbol and (Length(FSymbols) > 0) then begin
+    FSymbols[High(FSymbols)].ForData:=True;
+    DataSymbol:=False;
+  end;
   while (Head <= Len) and not Error do begin
     SkipSpaces;
     if Head > Len then Break;
@@ -291,8 +311,23 @@ begin
     end else if Code[Head] in ['0'..'9', '$', '-'] then begin
       AddWord(NextNumber and $FFFF);
     end else begin
-      SetError('Number or string literal expected in DATA', Head);
-      Exit;
+      Token:=NextToken;
+      for Reg:=crA to crO do
+        if CPURegisterNames[Reg]=Token then begin
+          SetError('Cannot use a register in DATA', TokenHead);
+          Exit;
+        end;
+      Found:=False;
+      for I:=0 to High(FSymbols) do
+        if Symbols[I].Name=Token then begin
+          AddWord(FSymbols[I].Address);
+          Found:=True;
+          Break;
+        end;
+      if not Found then begin
+        AddFixup(Token, TokenHead, Size);
+        AddWord(0);
+      end;
     end;
     SkipSpaces;
     if (Head > Len) or (Code[Head] <> ',') then Break;
@@ -304,6 +339,10 @@ procedure TAssembler.AssembleReserve;
 var
   I: Integer;
 begin
+  if DataSymbol and (Length(FSymbols) > 0) then begin
+    FSymbols[High(FSymbols)].ForData:=True;
+    DataSymbol:=False;
+  end;
   SkipSpaces;
   if Head > Len then begin
     SetError('Unexpected end of code in RESERVE', Head);
@@ -320,7 +359,6 @@ procedure TAssembler.AssembleInstruction;
 var
   InstrName: string;
   Instr: TCPUInstruction;
-  SaveHead: Integer;
 
   procedure DoAssembleInstruction(AInstr: TCPUInstruction);
   var
@@ -365,11 +403,9 @@ var
           end;
           if Code[Head]='+' then begin
             Inc(Head);
-            SkipSpaces;
-            SaveHead:=Head;
             Token:=NextToken;
             if Token='' then begin
-              SetError('Syntax error while parsing the base for memory access in ' + CPUInstructionNames[AInstr] + ' after address', SaveHead);
+              SetError('Syntax error while parsing the base for memory access in ' + CPUInstructionNames[AInstr] + ' after address', TokenHead);
               Exit(0);
             end;
             for Reg:=crA to crJ do
@@ -382,7 +418,7 @@ var
                 AddWord(I);
                 Exit($10 + Ord(Reg));
               end;
-            SetError('Cannot use ' + Token + ' as a base for memory access in ' + CPUInstructionNames[AInstr] + ' after address', SaveHead);
+            SetError('Cannot use ' + Token + ' as a base for memory access in ' + CPUInstructionNames[AInstr] + ' after address', TokenHead);
             Exit(0);
           end;
           AddWord(I);
@@ -393,10 +429,9 @@ var
             Inc(Head);
           Exit($1E);
         end;
-        SaveHead:=Head;
         Token:=NextToken;
         if Token='' then begin
-          SetError('Syntax error while parsing memory access address in ' + CPUInstructionNames[AInstr], SaveHead);
+          SetError('Syntax error while parsing memory access address in ' + CPUInstructionNames[AInstr], TokenHead);
           Exit(0);
         end;
         for Reg:=crA to crJ do
@@ -413,7 +448,7 @@ var
             AddWord(FSymbols[I].Address);
             goto fuckit;
           end;
-        AddFixup(Token, Size);
+        AddFixup(Token, TokenHead, Size);
         AddWord(0);
         fuckit:
         SkipSpaces;
@@ -423,11 +458,9 @@ var
         end;
         if Code[Head]='+' then begin
           Inc(Head);
-          SkipSpaces;
-          SaveHead:=Head;
           Token:=NextToken;
           if Token='' then begin
-            SetError('Syntax error while parsing the base for memory access in ' + CPUInstructionNames[AInstr] + ' after symbol', SaveHead);
+            SetError('Syntax error while parsing the base for memory access in ' + CPUInstructionNames[AInstr] + ' after symbol', TokenHead);
             Exit(0);
           end;
           for Reg:=crA to crJ do
@@ -439,7 +472,7 @@ var
                 Inc(Head);
               Exit($10 + Ord(Reg));
             end;
-          SetError('Cannot use ' + Token + ' as a base for memory access in ' + CPUInstructionNames[AInstr] + ' after address', SaveHead);
+          SetError('Cannot use ' + Token + ' as a base for memory access in ' + CPUInstructionNames[AInstr] + ' after address', TokenHead);
           Exit(0);
         end;
         if not ((Head <= Len) and (Code[Head] in [']', ')'])) then
@@ -467,7 +500,7 @@ var
         for I:=SymbolCount - 1 downto 0 do
           if FSymbols[I].Name=Token then
             Exit(WriteLiteral(FSymbols[I].Address));
-        AddFixup(Token, Size);
+        AddFixup(Token, TokenHead, Size);
         AddWord(0);
         Exit($1F);
       end;
@@ -499,10 +532,9 @@ var
   end;
 
 begin
-  SaveHead:=Head;
   InstrName:=NextToken;
   if InstrName='' then begin
-    SetError('Syntax error - an instruction was expected here', SaveHead);
+    SetError('Syntax error - an instruction was expected here', TokenHead);
     Exit;
   end;
   if (InstrName='DW') or(InstrName='DAT') or (InstrName='DATA') then begin
@@ -515,11 +547,12 @@ begin
   end;
   for Instr:=Low(TCPUInstruction) to High(TCPUInstruction) do begin
     if CPUInstructionNames[Instr]=InstrName then begin
+      DataSymbol:=False;
       DoAssembleInstruction(Instr);
       Exit;
     end;
   end;
-  SetError('Unknown instruction: ' + InstrName, SaveHead);
+  SetError('Unknown instruction: ' + InstrName, TokenHead);
 end;
 
 procedure TAssembler.Assemble(ACode: string);
@@ -542,7 +575,7 @@ begin
   end;
   for I:=0 to High(Fixups) do
     if Fixups[I].Name <> '' then begin
-      SetError('Unknown symbol or label: ' + Fixups[I].Name, -1);
+      SetError('Unknown symbol or label: ' + Fixups[I].Name, Fixups[I].CodePos);
       Break;
     end;
 end;
@@ -702,6 +735,11 @@ var
   ValueA, ValueB: Word;
   Destination: TResourceAddress;
 begin
+  if Assigned(FOnBeforeExecution) then
+    if not FOnBeforeExecution(Self, CPURegister[crPC]) then begin
+      BurnCycles:=0;
+      Exit;
+    end;
   FetchNextInstruction(Instruction, Destination, ValueA, ValueB);
   if SkipInstruction then begin
     FSkipInstruction:=False;
@@ -789,6 +827,7 @@ var
 begin
   FSkipInstruction:=False;
   FCycles:=0;
+  BurnCycles:=0;
   for I:=crA to crO do CPURegister[I]:=0;
 end;
 

@@ -1,11 +1,11 @@
 object Main: TMain
-  Left = 276
-  Height = 690
-  Top = 157
-  Width = 1016
+  Left = 258
+  Height = 641
+  Top = 130
+  Width = 1024
   Caption = 'DCPU-16 Studio'
-  ClientHeight = 670
-  ClientWidth = 1016
+  ClientHeight = 621
+  ClientWidth = 1024
   Menu = MainMenu1
   OnCloseQuery = FormCloseQuery
   OnCreate = FormCreate
@@ -456,14 +456,16 @@ object Main: TMain
   end
   object lbMessages: TLabel
     AnchorSideLeft.Control = lbMemoryDump
+    AnchorSideLeft.Side = asrBottom
     AnchorSideTop.Control = lbMemoryDump
     AnchorSideTop.Side = asrBottom
     AnchorSideBottom.Control = mMessages
-    Left = 8
+    Left = 288
     Height = 16
-    Top = 527
+    Top = 478
     Width = 55
     Anchors = [akLeft, akBottom]
+    BorderSpacing.Left = 8
     Caption = '&Messages:'
     FocusControl = mMessages
     ParentColor = False
@@ -474,14 +476,16 @@ object Main: TMain
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = lbDisassembly
     AnchorSideRight.Side = asrBottom
-    AnchorSideBottom.Control = lbMessages
+    AnchorSideBottom.Control = lbDataSymbolsLabel
     Left = 8
-    Height = 255
+    Height = 177
     Top = 272
     Width = 272
     Anchors = [akTop, akLeft, akRight, akBottom]
+    Font.Pitch = fpFixed
     ItemHeight = 0
     OnDrawItem = lbMemoryDumpDrawItem
+    ParentFont = False
     ScrollWidth = 270
     Style = lbOwnerDrawFixed
     TabOrder = 1
@@ -506,10 +510,10 @@ object Main: TMain
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
-    Left = 8
+    Left = 288
     Height = 119
-    Top = 543
-    Width = 1000
+    Top = 494
+    Width = 728
     Anchors = [akLeft, akRight, akBottom]
     BorderSpacing.Right = 8
     BorderSpacing.Bottom = 8
@@ -573,13 +577,13 @@ object Main: TMain
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = Owner
     AnchorSideRight.Side = asrBottom
-    AnchorSideBottom.Control = lbMemoryDump
-    AnchorSideBottom.Side = asrBottom
+    AnchorSideBottom.Control = mMessages
     Left = 516
-    Height = 503
+    Height = 462
     Top = 24
-    Width = 492
+    Width = 500
     BorderSpacing.Right = 8
+    BorderSpacing.Bottom = 8
     Anchors = [akTop, akLeft, akRight, akBottom]
     Font.Height = -13
     Font.Name = 'Courier New'
@@ -1372,6 +1376,37 @@ object Main: TMain
     BorderSpacing.Top = 8
     Caption = 'Screen:'
     ParentColor = False
+  end
+  object lbDataSymbolsLabel: TLabel
+    AnchorSideLeft.Control = Owner
+    AnchorSideTop.Control = lbLastCycles
+    Left = 8
+    Height = 16
+    Top = 449
+    Width = 76
+    BorderSpacing.Left = 8
+    Caption = 'Data &Symbols:'
+    FocusControl = lbDataSymbols
+    ParentColor = False
+  end
+  object lbDataSymbols: TListBox
+    AnchorSideLeft.Control = lbDataSymbolsLabel
+    AnchorSideTop.Control = lbDataSymbolsLabel
+    AnchorSideTop.Side = asrBottom
+    AnchorSideRight.Control = lbDisassembly
+    AnchorSideRight.Side = asrBottom
+    AnchorSideBottom.Control = Owner
+    AnchorSideBottom.Side = asrBottom
+    Left = 8
+    Height = 148
+    Top = 465
+    Width = 272
+    Anchors = [akTop, akLeft, akRight, akBottom]
+    BorderSpacing.Bottom = 8
+    Font.Pitch = fpFixed
+    ItemHeight = 0
+    ParentFont = False
+    TabOrder = 22
   end
   object ApplicationProperties1: TApplicationProperties
     ShowButtonGlyphs = sbgSystem
