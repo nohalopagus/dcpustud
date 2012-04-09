@@ -1,10 +1,10 @@
 object Main: TMain
-  Left = 0
+  Left = 275
   Height = 690
-  Top = 25
+  Top = 128
   Width = 1016
   Caption = 'DCPU-16 Studio'
-  ClientHeight = 665
+  ClientHeight = 670
   ClientWidth = 1016
   Menu = MainMenu1
   OnCloseQuery = FormCloseQuery
@@ -18,7 +18,7 @@ object Main: TMain
     AnchorSideTop.Side = asrBottom
     Left = 8
     Height = 232
-    Top = 26
+    Top = 24
     Width = 272
     Font.Pitch = fpFixed
     ItemHeight = 0
@@ -28,15 +28,14 @@ object Main: TMain
     ScrollWidth = 270
     Style = lbOwnerDrawFixed
     TabOrder = 0
-    TopIndex = -1
   end
   object lbDisassemblyLabel: TLabel
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = Owner
     Left = 8
-    Height = 18
+    Height = 16
     Top = 8
-    Width = 85
+    Width = 69
     BorderSpacing.Left = 8
     BorderSpacing.Top = 8
     Caption = '&Disassembly:'
@@ -49,9 +48,9 @@ object Main: TMain
     AnchorSideTop.Control = plScreen
     AnchorSideTop.Side = asrBottom
     Left = 288
-    Height = 18
-    Top = 162
-    Width = 63
+    Height = 16
+    Top = 160
+    Width = 51
     BorderSpacing.Left = 8
     BorderSpacing.Top = 8
     Caption = '&Registers:'
@@ -63,9 +62,9 @@ object Main: TMain
     AnchorSideTop.Control = seA
     AnchorSideTop.Side = asrCenter
     Left = 296
-    Height = 18
-    Top = 184
-    Width = 14
+    Height = 16
+    Top = 179
+    Width = 12
     BorderSpacing.Left = 8
     Caption = 'A:'
     FocusControl = seA
@@ -77,8 +76,8 @@ object Main: TMain
     AnchorSideTop.Control = lbRegisters
     AnchorSideTop.Side = asrBottom
     Left = 328
-    Height = 27
-    Top = 180
+    Height = 23
+    Top = 176
     Width = 66
     BorderSpacing.Left = 40
     MaxValue = 65535
@@ -91,8 +90,8 @@ object Main: TMain
     AnchorSideTop.Control = seA
     AnchorSideTop.Side = asrBottom
     Left = 328
-    Height = 27
-    Top = 215
+    Height = 23
+    Top = 207
     Width = 66
     BorderSpacing.Top = 8
     MaxValue = 65535
@@ -104,9 +103,9 @@ object Main: TMain
     AnchorSideTop.Control = seB
     AnchorSideTop.Side = asrCenter
     Left = 296
-    Height = 18
-    Top = 219
-    Width = 14
+    Height = 16
+    Top = 210
+    Width = 11
     Caption = 'B:'
     FocusControl = seB
     ParentColor = False
@@ -117,8 +116,8 @@ object Main: TMain
     AnchorSideTop.Control = seB
     AnchorSideTop.Side = asrBottom
     Left = 328
-    Height = 27
-    Top = 250
+    Height = 23
+    Top = 238
     Width = 66
     BorderSpacing.Top = 8
     MaxValue = 65535
@@ -130,9 +129,9 @@ object Main: TMain
     AnchorSideTop.Control = seC
     AnchorSideTop.Side = asrCenter
     Left = 296
-    Height = 18
-    Top = 254
-    Width = 14
+    Height = 16
+    Top = 241
+    Width = 12
     Caption = 'C:'
     FocusControl = seC
     ParentColor = False
@@ -143,8 +142,8 @@ object Main: TMain
     AnchorSideTop.Control = seC
     AnchorSideTop.Side = asrBottom
     Left = 328
-    Height = 27
-    Top = 285
+    Height = 23
+    Top = 269
     Width = 66
     BorderSpacing.Top = 8
     MaxValue = 65535
@@ -156,9 +155,9 @@ object Main: TMain
     AnchorSideTop.Control = seX
     AnchorSideTop.Side = asrCenter
     Left = 296
-    Height = 18
-    Top = 289
-    Width = 13
+    Height = 16
+    Top = 272
+    Width = 11
     Caption = 'X:'
     FocusControl = seX
     ParentColor = False
@@ -169,8 +168,8 @@ object Main: TMain
     AnchorSideTop.Control = seX
     AnchorSideTop.Side = asrBottom
     Left = 328
-    Height = 27
-    Top = 320
+    Height = 23
+    Top = 300
     Width = 66
     BorderSpacing.Top = 8
     MaxValue = 65535
@@ -182,9 +181,9 @@ object Main: TMain
     AnchorSideTop.Control = seY
     AnchorSideTop.Side = asrCenter
     Left = 296
-    Height = 18
-    Top = 324
-    Width = 10
+    Height = 16
+    Top = 303
+    Width = 11
     Caption = 'Y:'
     FocusControl = seY
     ParentColor = False
@@ -195,8 +194,8 @@ object Main: TMain
     AnchorSideTop.Control = seY
     AnchorSideTop.Side = asrBottom
     Left = 328
-    Height = 27
-    Top = 355
+    Height = 23
+    Top = 331
     Width = 66
     BorderSpacing.Top = 8
     MaxValue = 65535
@@ -208,9 +207,9 @@ object Main: TMain
     AnchorSideTop.Control = seZ
     AnchorSideTop.Side = asrCenter
     Left = 296
-    Height = 18
-    Top = 359
-    Width = 15
+    Height = 16
+    Top = 334
+    Width = 11
     Caption = 'Z:'
     FocusControl = seZ
     ParentColor = False
@@ -221,8 +220,8 @@ object Main: TMain
     AnchorSideTop.Control = seZ
     AnchorSideTop.Side = asrBottom
     Left = 328
-    Height = 27
-    Top = 390
+    Height = 23
+    Top = 362
     Width = 66
     BorderSpacing.Top = 8
     MaxValue = 65535
@@ -234,9 +233,9 @@ object Main: TMain
     AnchorSideTop.Control = seI
     AnchorSideTop.Side = asrCenter
     Left = 296
-    Height = 18
-    Top = 394
-    Width = 8
+    Height = 16
+    Top = 365
+    Width = 7
     Caption = 'I:'
     FocusControl = seI
     ParentColor = False
@@ -246,9 +245,9 @@ object Main: TMain
     AnchorSideLeft.Side = asrBottom
     AnchorSideTop.Control = lbRegisters
     Left = 402
-    Height = 18
-    Top = 162
-    Width = 71
+    Height = 16
+    Top = 160
+    Width = 56
     BorderSpacing.Left = 8
     Caption = '&CPU State:'
     FocusControl = sePC
@@ -260,8 +259,8 @@ object Main: TMain
     AnchorSideTop.Control = lbCPUState
     AnchorSideTop.Side = asrBottom
     Left = 442
-    Height = 27
-    Top = 180
+    Height = 23
+    Top = 176
     Width = 66
     BorderSpacing.Left = 40
     MaxValue = 65535
@@ -273,9 +272,9 @@ object Main: TMain
     AnchorSideTop.Control = sePC
     AnchorSideTop.Side = asrCenter
     Left = 418
-    Height = 18
-    Top = 184
-    Width = 22
+    Height = 16
+    Top = 179
+    Width = 19
     BorderSpacing.Left = 16
     Caption = 'PC:'
     FocusControl = sePC
@@ -287,8 +286,8 @@ object Main: TMain
     AnchorSideTop.Control = sePC
     AnchorSideTop.Side = asrBottom
     Left = 442
-    Height = 27
-    Top = 215
+    Height = 23
+    Top = 207
     Width = 66
     BorderSpacing.Top = 8
     MaxValue = 65535
@@ -300,9 +299,9 @@ object Main: TMain
     AnchorSideTop.Control = seSP
     AnchorSideTop.Side = asrCenter
     Left = 418
-    Height = 18
-    Top = 219
-    Width = 22
+    Height = 16
+    Top = 210
+    Width = 17
     Caption = 'SP:'
     FocusControl = seSP
     ParentColor = False
@@ -313,8 +312,8 @@ object Main: TMain
     AnchorSideTop.Control = seSP
     AnchorSideTop.Side = asrBottom
     Left = 442
-    Height = 27
-    Top = 250
+    Height = 23
+    Top = 238
     Width = 66
     BorderSpacing.Top = 8
     MaxValue = 65535
@@ -326,9 +325,9 @@ object Main: TMain
     AnchorSideTop.Control = seO
     AnchorSideTop.Side = asrCenter
     Left = 418
-    Height = 18
-    Top = 254
-    Width = 15
+    Height = 16
+    Top = 241
+    Width = 13
     Caption = 'O:'
     FocusControl = seO
     ParentColor = False
@@ -338,9 +337,9 @@ object Main: TMain
     AnchorSideLeft.Side = asrBottom
     AnchorSideTop.Control = Owner
     Left = 516
-    Height = 18
+    Height = 16
     Top = 8
-    Width = 66
+    Width = 55
     BorderSpacing.Left = 8
     BorderSpacing.Top = 8
     Caption = '&Assembly:'
@@ -352,8 +351,8 @@ object Main: TMain
     AnchorSideTop.Control = seI
     AnchorSideTop.Side = asrBottom
     Left = 328
-    Height = 27
-    Top = 425
+    Height = 23
+    Top = 393
     Width = 66
     BorderSpacing.Top = 8
     MaxValue = 65535
@@ -365,8 +364,8 @@ object Main: TMain
     AnchorSideTop.Control = seJ
     AnchorSideTop.Side = asrCenter
     Left = 296
-    Height = 18
-    Top = 429
+    Height = 16
+    Top = 396
     Width = 8
     Caption = 'J:'
     FocusControl = seJ
@@ -379,8 +378,8 @@ object Main: TMain
     AnchorSideRight.Control = seO
     AnchorSideRight.Side = asrBottom
     Left = 402
-    Height = 22
-    Top = 285
+    Height = 19
+    Top = 269
     Width = 106
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Top = 8
@@ -395,8 +394,8 @@ object Main: TMain
     AnchorSideRight.Control = cbRunning
     AnchorSideRight.Side = asrBottom
     Left = 402
-    Height = 22
-    Top = 307
+    Height = 19
+    Top = 288
     Width = 106
     Anchors = [akTop, akLeft, akRight]
     Caption = '&Follow'
@@ -411,8 +410,8 @@ object Main: TMain
     AnchorSideRight.Control = cbFollow
     AnchorSideRight.Side = asrBottom
     Left = 402
-    Height = 22
-    Top = 329
+    Height = 19
+    Top = 307
     Width = 106
     Anchors = [akTop, akLeft, akRight]
     Caption = '&Cycle Exact'
@@ -427,8 +426,8 @@ object Main: TMain
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = btAssemble
     Left = 402
-    Height = 29
-    Top = 354
+    Height = 25
+    Top = 330
     Width = 106
     Anchors = [akTop, akLeft, akRight]
     AutoSize = True
@@ -446,8 +445,8 @@ object Main: TMain
     AnchorSideBottom.Control = seJ
     AnchorSideBottom.Side = asrBottom
     Left = 402
-    Height = 29
-    Top = 389
+    Height = 25
+    Top = 361
     Width = 106
     Anchors = [akTop, akLeft, akRight]
     AutoSize = True
@@ -462,9 +461,9 @@ object Main: TMain
     AnchorSideTop.Side = asrBottom
     AnchorSideBottom.Control = mMessages
     Left = 288
-    Height = 18
-    Top = 520
-    Width = 69
+    Height = 16
+    Top = 527
+    Width = 55
     Anchors = [akLeft, akBottom]
     BorderSpacing.Left = 8
     Caption = '&Messages:'
@@ -479,8 +478,8 @@ object Main: TMain
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = lbDataSymbolsLabel
     Left = 8
-    Height = 232
-    Top = 276
+    Height = 177
+    Top = 272
     Width = 272
     Anchors = [akTop, akLeft, akRight, akBottom]
     Font.Pitch = fpFixed
@@ -490,16 +489,15 @@ object Main: TMain
     ScrollWidth = 270
     Style = lbOwnerDrawFixed
     TabOrder = 1
-    TopIndex = -1
   end
   object lbMemoryDumpLabel: TLabel
     AnchorSideLeft.Control = lbDisassembly
     AnchorSideTop.Control = lbDisassembly
     AnchorSideTop.Side = asrBottom
     Left = 8
-    Height = 18
-    Top = 258
-    Width = 100
+    Height = 16
+    Top = 256
+    Width = 85
     Caption = 'Memory &Dump:'
     FocusControl = lbMemoryDump
     ParentColor = False
@@ -514,7 +512,7 @@ object Main: TMain
     AnchorSideBottom.Side = asrBottom
     Left = 288
     Height = 119
-    Top = 538
+    Top = 543
     Width = 720
     Anchors = [akLeft, akRight, akBottom]
     BorderSpacing.Right = 8
@@ -533,8 +531,8 @@ object Main: TMain
     AnchorSideRight.Control = btAssemble
     AnchorSideRight.Side = asrBottom
     Left = 402
-    Height = 29
-    Top = 424
+    Height = 25
+    Top = 392
     Width = 106
     Anchors = [akTop, akLeft, akRight]
     AutoSize = True
@@ -550,8 +548,8 @@ object Main: TMain
     AnchorSideTop.Side = asrBottom
     AnchorSideRight.Control = mCode
     Left = 288
-    Height = 39
-    Top = 460
+    Height = 16
+    Top = 424
     Width = 220
     Anchors = [akTop, akLeft, akRight]
     BorderSpacing.Left = 8
@@ -566,9 +564,9 @@ object Main: TMain
     AnchorSideTop.Control = lbNextInstructionState
     AnchorSideTop.Side = asrBottom
     Left = 288
-    Height = 18
-    Top = 508
-    Width = 158
+    Height = 16
+    Top = 449
+    Width = 129
     BorderSpacing.Top = 9
     Caption = 'Last instruction cycles: 0'
     ParentColor = False
@@ -581,8 +579,8 @@ object Main: TMain
     AnchorSideRight.Side = asrBottom
     AnchorSideBottom.Control = mMessages
     Left = 516
-    Height = 504
-    Top = 26
+    Height = 511
+    Top = 24
     Width = 492
     BorderSpacing.Right = 8
     BorderSpacing.Bottom = 8
@@ -1333,7 +1331,7 @@ object Main: TMain
     AnchorSideRight.Control = mCode
     Left = 288
     Height = 128
-    Top = 26
+    Top = 24
     Width = 220
     Anchors = [akTop, akLeft, akRight]
     AutoSize = True
@@ -1371,9 +1369,9 @@ object Main: TMain
     AnchorSideLeft.Side = asrBottom
     AnchorSideTop.Control = Owner
     Left = 288
-    Height = 18
+    Height = 16
     Top = 8
-    Width = 50
+    Width = 39
     BorderSpacing.Left = 8
     BorderSpacing.Top = 8
     Caption = 'Screen:'
@@ -1383,9 +1381,9 @@ object Main: TMain
     AnchorSideLeft.Control = Owner
     AnchorSideTop.Control = lbLastCycles
     Left = 8
-    Height = 18
-    Top = 508
-    Width = 95
+    Height = 16
+    Top = 449
+    Width = 76
     BorderSpacing.Left = 8
     Caption = 'Data &Symbols:'
     FocusControl = lbDataSymbols
@@ -1400,8 +1398,8 @@ object Main: TMain
     AnchorSideBottom.Control = Owner
     AnchorSideBottom.Side = asrBottom
     Left = 8
-    Height = 131
-    Top = 526
+    Height = 197
+    Top = 465
     Width = 272
     Anchors = [akTop, akLeft, akRight, akBottom]
     BorderSpacing.Bottom = 8
@@ -1410,7 +1408,6 @@ object Main: TMain
     ParentFont = False
     ScrollWidth = 270
     TabOrder = 22
-    TopIndex = -1
   end
   object ApplicationProperties1: TApplicationProperties
     ShowButtonGlyphs = sbgSystem
@@ -1604,7 +1601,7 @@ object Main: TMain
   end
   object LazHelp1: TLazHelp
     Page = 'main'
-    Code = '\page[main]{'#10'\title[Welcome]'#10'\h[1]{DCPU-16 Studio Help}'#10'\p{Welcome to \b{DCPU-16 Studio}, a development tool for the virtual computers in Mojang''s upcoming 0x10^c game. DCPU-16 Studio provides an assembler, disassembler, emulator and debugger for DCPU-16 programs in a graphical interactive interface.}'#10'\p{Select a topic from below:}'#10'\ul{'#10'\li{\a[assembler]{The Assembler}}'#10'\li{\a[debugger]{The Debugger}}'#10'\li{\a[dcpu16]{DCPU-16 Specification}}'#10'\li{\a[dcpu16ins]{DCPU-16 Instructions}}}}'#10#10'\page[assembler]{'#10'\title[The DCPU-16 Studio Assembler]'#10'\h[1]{The Assembler}'#10'\p{The \b{DCPU-16 Studio Assembler} follows closely the style used by the official DCPU-16 specs with only few differences. In the assembler, labels and instructions can be placed anywhere on a line and multiple instructions can be placed in the same line. Like in the official style, the labels begin with a colon. Hexadecimals must be prefaced with either 0x or $ (the latter is a DCPU-16 Studio extension). Neither the code nor the symbols are case sensitive.}'#10'\p{The \b{RESERVE x} pseudoinstruction can be used to reserve x words in the program. The \b{DATA d1, d2, d3, ...} pseudoinstruction can be used to put words and \a[asmstrlit]{string literals} directly in the program code. For compatibility with other assemblers, the pseudoinstructions \b{DAT} and \b{DW} are equivalent to DATA and the pseudoinstruction \b{RESW} is equivalent to RESERVE.}'#10'\p{Comments can being with either the semicolon symbol or the C++-like double slash (this is a DCPU-16 Studio extension).}'#10'\p{DCPU-16 Studio does not generate the same exactly bytecodes as the official assembler. For example the test program provided by the official specs is shorter a few bytes.}}'#10#10'\page[asmstrlit]{'#10'\title[Assembler String Literals]'#10'\h[1]{String Literals}'#10'\p{The assembler can insert arbitrary words in the program using the \b{DATA} pseudoinstruction. The instruction accepts numbers and string literals. The string literals are encoded as one word per character and they are written in C-like or Pascal-like syntax using double or single quotes. If you use double quotes, you can use two double quotes to insert a double quote character to the program (similarly for single quotes). For example the string "He said ""Hello""" inserts He said "Hello".}'#10'\p{The strings can also contain C-like escape characters with the escapes \b{0} (for NUL), \b{A} (Bell, 0x07), \b{B} (Backspace, 0x08), \b{T} (Tab, 0x09), \b{N} (Newline, 0x0A), \b{V} (Vertical Tab, 0x0B), \b{F} (Formfeed, 0x0C), \b{R} (Carriage Return, 0x0D), \b{E} (Escape, 0x1B) and \b{S} (Space, 0x20). Any other character is inserted as-is, so he escape character can also be used to escape the quotes above.}'#10'\p{Note that the syntax highligher only supports double quotes and doesn''t support escaping the quotes.}'#10'}'#10#10'\page[debugger]{'#10'\title[The DCPU-16 Studio Debugger]'#10'\h[1]{The Debugger}'#10'\p{The debugger should be straightforward: load any program and you can run it or step through it. To run in full speed check the \b{Running} checkbox. The emulator can be either cycle exact or always a single instruction per cycle based on the state of the \b{Cycle Exact} checkbox. If that checkbox is checked, the DCPU-16 Studio will disable all monitors (except the screen) and run the program at 100KHz. Otherwise the execution will be synced to the monitors. If the \b{Follow} checkbox is checked, the debugger will show the instruction to be executed next and the last changed value in memory. The emulator also shows the cycles of the last instruction and the current execution flag.}'#10'\p{You can modify the program''s registers while the program is running or paused. Double clicking on an instruction in the disassembler window will place a breakpoint there (an icon with a hand will appear). If PC is set to an instruction with a breakpoint, the execution will be paused. Additionally, all instructions that were pointed to by PC will have a small blue circle in front of them.}}'#10#10'\page[dcpu16]{'#10'\title[The DCPU-16 Specifications]'#10'\h[1]{The DCPU-16 Specs}'#10'\p{DCPU-16 is a custom virtual 16bit CPU. In DCPU-16 the only accessible unit of data is 16bit words (no individual bytes are accessible). The CPU has 11 registers, 10 of whom can be used as general purpose registers although the CPU uses two of them for special purposes. The registers are named A, B, C, X, Y, Z, I, J, PC, SP and O. The PC register is the program counter, the SP is the stack pointer and the O is the overflow register.}'#10'\p{Unlike most CPUs, DCPU-16 does not have an accessible flag register (the O register can hold any value and be used like any other register), although there is a hidden flag that is used to skip the execution of instructions when tests are performed.}'#10'\p{Instructions are separated in Basic and Extended. Basic instructions take two parameters while Extended instructions take only one. The type of instruction and the nature of the parameter is encoded in the instruction word (the word pointed to at by the PC register) which can be followed by one or two additional words, based on the parameter.}'#10'\p{Basic instructions have the encoding BBBBBBAAAAAAOOOO where OOOO is the instruction opcode and AAAAAA and BBBBBB are the parameters. Extended instructions have the encoding AAAAAAOOOOOO0000 where OOOOOO is the instruction opcode and AAAAAA is the parameter to the instruction (the first four bits are set to zero).}'#10'\p{The parameters have the following encoding, based on their range (values inside brackets mean that the value is used to access the memory):}'#10'\ul{'#10'\li{\b{0x00-0x07} - register (A, B, C, X, Y, Z, I or J)}'#10'\li{\b{0x08-0x0F} - /[register/] (memory at the address stored in the register)}'#10'\li{\b{0x10-0x17} - /[offset + register/] (offset is stored after the instruction)}'#10'\li{\b{0x18} - POP (pop from the stack by using the value at the address stored in SP and increasing the value of SP). Note that this can be used in combination with \b{SET} to pop values from the stack and return from subroutines by storing the value popped to the \b{PC} register.}'#10'\li{\b{0x19} - PEEK (peek the value at the address stored in SP but do not modify SP)}'#10'\li{\b{0x1A} - PUSH (push to the stack by decreasing the value of SP and using the decreased value as the address to store the new value). Note that this assumes that the parameter is used as the destination for some operation). This can be used in combination with \b{SET} to push values to the stack.}'#10'\li{\b{0x1B} - the SP register''s value}'#10'\li{\b{0x1C} - the PC register''s value. This can be used to jump around the code and return from subroutines when used with \b{POP} above.}'#10'\li{\b{0x1D} - the O register''s value}'#10'\li{\b{0x1E} - /[address/] (the address is stored after the instruction)}'#10'\li{\b{0x1F} - literal (the literal is stored after the instruction)}'#10'\li{\b{0x20-0x3F} - literal 0x00-0x1F}}'#10'\p{For details see \b{http:////0x10c.com//doc//dcpu-16.txt}}'#10'\p{The emulator also supports the undocumented 32x16 character screen which starts at memory location $8000 and is 512 (32x16) words. Each word contains the foreground color, background color, character and blinking attribute of a character. The word has the format FFFFBBBBLCCCCCCC. FFFF is the foreground color, BBBB is the background color, L is the blinking bit and C is the ASCII character code. The color palette is the same as the one used in PC textmode programs.}'#10'\p{A keyboard interface is also provided. The keyboard simply puts the typed character at memory location $9000. If there is already a character there (the value is not zero), the emulator will not replace it but beep instead. The program is expected to set the location to zero to accept a new keystroke.}'#10'}'#10#10'\page[dcpu16ins]{'#10'\title[The DCPU-16 Instruction Set]'#10'\h[1]{DCPU-16 Instructions}'#10'\p{The DCPU-16 instruction set is as follows:}'#10'\ul{'#10'\li{\b{SET a, b} - set a to b}'#10'\li{\b{ADD a, b} - set a to a + b, set O to 0x0001 if there is an overflow}'#10'\li{\b{SUB a, b} - set a to a - b, set O to 0xFFFF if there is an underflow}'#10'\li{\b{MUL a, b} - set a to a * b, set O to ((a * b) >> 16) & 0xFFFF}'#10'\li{\b{DIV a, b} - set a to a // b, set O to ((a << 16) // b) & 0xFFFF. If b is 0 then both a and O are set to 0.}'#10'\li{\b{MOD a, b} - set a to a % b. If b is 0 then a is set to 0.}'#10'\li{\b{SHL a, b} - set a to a << b, set O to ((a << b) >> 16) & 0xFFFF}'#10'\li{\b{SHR a, b} - set a to a >> b, set O to ((a << 16) >> b) & 0xFFFF}'#10'\li{\b{AND a, b} - set a to a & b}'#10'\li{\b{BOR a, b} - set a to a | b}'#10'\li{\b{XOR a, b} - set a to a ^ b}'#10'\li{\b{IFE a, b} - executes the next instruction only if a == b}'#10'\li{\b{IFN a, b} - executes the next instruction only if a != b}'#10'\li{\b{IFG a, b} - executes the next instruction only if a > b}'#10'\li{\b{IFB a, b} - executes the next instruction only if (a & b) != 0}'#10'\li{\b{JSR addr} - pushes the current PC to the stack and sets it to addr. Can be used to call subroutines}}'#10'\p{All word reads take one cycle (this includes instruction reads). The instructions ADD, SUB, MUL, SHR, JSR, IFE, IFN, IFG and IFB take an additional cycle (if the test fail for the last four, another extra cycle is used). The instructions DIV and MOD take two additional cycles.}'#10'}'#10
+    Code = '\page[main]{'#13#10'\title[Welcome]'#13#10'\h[1]{DCPU-16 Studio Help}'#13#10'\p{Welcome to \b{DCPU-16 Studio}, a development tool for the virtual computers in Mojang''s upcoming 0x10^c game. DCPU-16 Studio provides an assembler, disassembler, emulator and debugger for DCPU-16 programs in a graphical interactive interface.}'#13#10'\p{Select a topic from below:}'#13#10'\ul{'#13#10'\li{\a[assembler]{The Assembler}}'#13#10'\li{\a[debugger]{The Debugger}}'#13#10'\li{\a[dcpu16]{DCPU-16 Specification}}'#13#10'\li{\a[dcpu16ins]{DCPU-16 Instructions}}}}'#13#10#13#10'\page[assembler]{'#13#10'\title[The DCPU-16 Studio Assembler]'#13#10'\h[1]{The Assembler}'#13#10'\p{The \b{DCPU-16 Studio Assembler} follows closely the style used by the official DCPU-16 specs with only few differences. In the assembler, labels and instructions can be placed anywhere on a line and multiple instructions can be placed in the same line. Like in the official style, the labels begin with a colon. Hexadecimals must be prefaced with either 0x or $ (the latter is a DCPU-16 Studio extension). Neither the code nor the symbols are case sensitive.}'#13#10'\p{The \b{RESERVE x} pseudoinstruction can be used to reserve x words in the program. The \b{DATA d1, d2, d3, ...} pseudoinstruction can be used to put words and \a[asmstrlit]{string literals} directly in the program code. For compatibility with other assemblers, the pseudoinstructions \b{DAT} and \b{DW} are equivalent to DATA and the pseudoinstruction \b{RESW} is equivalent to RESERVE.}'#13#10'\p{Comments can being with either the semicolon symbol or the C++-like double slash (this is a DCPU-16 Studio extension).}'#13#10'\p{DCPU-16 Studio does not generate the same exactly bytecodes as the official assembler. For example the test program provided by the official specs is shorter a few bytes.}}'#13#10#13#10'\page[asmstrlit]{'#13#10'\title[Assembler String Literals]'#13#10'\h[1]{String Literals}'#13#10'\p{The assembler can insert arbitrary words in the program using the \b{DATA} pseudoinstruction. The instruction accepts numbers and string literals. The string literals are encoded as one word per character and they are written in C-like or Pascal-like syntax using double or single quotes. If you use double quotes, you can use two double quotes to insert a double quote character to the program (similarly for single quotes). For example the string "He said ""Hello""" inserts He said "Hello".}'#13#10'\p{The strings can also contain C-like escape characters with the escapes \b{0} (for NUL), \b{A} (Bell, 0x07), \b{B} (Backspace, 0x08), \b{T} (Tab, 0x09), \b{N} (Newline, 0x0A), \b{V} (Vertical Tab, 0x0B), \b{F} (Formfeed, 0x0C), \b{R} (Carriage Return, 0x0D), \b{E} (Escape, 0x1B) and \b{S} (Space, 0x20). Any other character is inserted as-is, so he escape character can also be used to escape the quotes above.}'#13#10'\p{Note that the syntax highligher only supports double quotes and doesn''t support escaping the quotes.}'#13#10'}'#13#10#13#10'\page[debugger]{'#13#10'\title[The DCPU-16 Studio Debugger]'#13#10'\h[1]{The Debugger}'#13#10'\p{The debugger should be straightforward: load any program and you can run it or step through it. To run in full speed check the \b{Running} checkbox. The emulator can be either cycle exact or always a single instruction per cycle based on the state of the \b{Cycle Exact} checkbox. If that checkbox is checked, the DCPU-16 Studio will disable all monitors (except the screen) and run the program at 100KHz. Otherwise the execution will be synced to the monitors. If the \b{Follow} checkbox is checked, the debugger will show the instruction to be executed next and the last changed value in memory. The emulator also shows the cycles of the last instruction and the current execution flag.}'#13#10'\p{You can modify the program''s registers while the program is running or paused. Double clicking on an instruction in the disassembler window will place a breakpoint there (an icon with a hand will appear). If PC is set to an instruction with a breakpoint, the execution will be paused. Additionally, all instructions that were pointed to by PC will have a small blue circle in front of them.}}'#13#10#13#10'\page[dcpu16]{'#13#10'\title[The DCPU-16 Specifications]'#13#10'\h[1]{The DCPU-16 Specs}'#13#10'\p{DCPU-16 is a custom virtual 16bit CPU. In DCPU-16 the only accessible unit of data is 16bit words (no individual bytes are accessible). The CPU has 11 registers, 10 of whom can be used as general purpose registers although the CPU uses two of them for special purposes. The registers are named A, B, C, X, Y, Z, I, J, PC, SP and O. The PC register is the program counter, the SP is the stack pointer and the O is the overflow register.}'#13#10'\p{Unlike most CPUs, DCPU-16 does not have an accessible flag register (the O register can hold any value and be used like any other register), although there is a hidden flag that is used to skip the execution of instructions when tests are performed.}'#13#10'\p{Instructions are separated in Basic and Extended. Basic instructions take two parameters while Extended instructions take only one. The type of instruction and the nature of the parameter is encoded in the instruction word (the word pointed to at by the PC register) which can be followed by one or two additional words, based on the parameter.}'#13#10'\p{Basic instructions have the encoding BBBBBBAAAAAAOOOO where OOOO is the instruction opcode and AAAAAA and BBBBBB are the parameters. Extended instructions have the encoding AAAAAAOOOOOO0000 where OOOOOO is the instruction opcode and AAAAAA is the parameter to the instruction (the first four bits are set to zero).}'#13#10'\p{The parameters have the following encoding, based on their range (values inside brackets mean that the value is used to access the memory):}'#13#10'\ul{'#13#10'\li{\b{0x00-0x07} - register (A, B, C, X, Y, Z, I or J)}'#13#10'\li{\b{0x08-0x0F} - /[register/] (memory at the address stored in the register)}'#13#10'\li{\b{0x10-0x17} - /[offset + register/] (offset is stored after the instruction)}'#13#10'\li{\b{0x18} - POP (pop from the stack by using the value at the address stored in SP and increasing the value of SP). Note that this can be used in combination with \b{SET} to pop values from the stack and return from subroutines by storing the value popped to the \b{PC} register.}'#13#10'\li{\b{0x19} - PEEK (peek the value at the address stored in SP but do not modify SP)}'#13#10'\li{\b{0x1A} - PUSH (push to the stack by decreasing the value of SP and using the decreased value as the address to store the new value). Note that this assumes that the parameter is used as the destination for some operation). This can be used in combination with \b{SET} to push values to the stack.}'#13#10'\li{\b{0x1B} - the SP register''s value}'#13#10'\li{\b{0x1C} - the PC register''s value. This can be used to jump around the code and return from subroutines when used with \b{POP} above.}'#13#10'\li{\b{0x1D} - the O register''s value}'#13#10'\li{\b{0x1E} - /[address/] (the address is stored after the instruction)}'#13#10'\li{\b{0x1F} - literal (the literal is stored after the instruction)}'#13#10'\li{\b{0x20-0x3F} - literal 0x00-0x1F}}'#13#10'\p{For details see \b{http:////0x10c.com//doc//dcpu-16.txt}}'#13#10'\p{The emulator also supports the undocumented 32x16 character screen which starts at memory location $8000 and is 512 (32x16) words. Each word contains the foreground color, background color, character and blinking attribute of a character. The word has the format FFFFBBBBLCCCCCCC. FFFF is the foreground color, BBBB is the background color, L is the blinking bit and C is the ASCII character code. The color palette is the same as the one used in PC textmode programs.}'#13#10'\p{A keyboard interface is also provided. The keyboard simply puts the typed character at memory location $9000. If there is already a character there (the value is not zero), the emulator will not replace it but beep instead. The program is expected to set the location to zero to accept a new keystroke.}'#13#10'}'#13#10#13#10'\page[dcpu16ins]{'#13#10'\title[The DCPU-16 Instruction Set]'#13#10'\h[1]{DCPU-16 Instructions}'#13#10'\p{The DCPU-16 instruction set is as follows:}'#13#10'\ul{'#13#10'\li{\b{SET a, b} - set a to b}'#13#10'\li{\b{ADD a, b} - set a to a + b, set O to 0x0001 if there is an overflow}'#13#10'\li{\b{SUB a, b} - set a to a - b, set O to 0xFFFF if there is an underflow}'#13#10'\li{\b{MUL a, b} - set a to a * b, set O to ((a * b) >> 16) & 0xFFFF}'#13#10'\li{\b{DIV a, b} - set a to a // b, set O to ((a << 16) // b) & 0xFFFF. If b is 0 then both a and O are set to 0.}'#13#10'\li{\b{MOD a, b} - set a to a % b. If b is 0 then a is set to 0.}'#13#10'\li{\b{SHL a, b} - set a to a << b, set O to ((a << b) >> 16) & 0xFFFF}'#13#10'\li{\b{SHR a, b} - set a to a >> b, set O to ((a << 16) >> b) & 0xFFFF}'#13#10'\li{\b{AND a, b} - set a to a & b}'#13#10'\li{\b{BOR a, b} - set a to a | b}'#13#10'\li{\b{XOR a, b} - set a to a ^ b}'#13#10'\li{\b{IFE a, b} - executes the next instruction only if a == b}'#13#10'\li{\b{IFN a, b} - executes the next instruction only if a != b}'#13#10'\li{\b{IFG a, b} - executes the next instruction only if a > b}'#13#10'\li{\b{IFB a, b} - executes the next instruction only if (a & b) != 0}'#13#10'\li{\b{JSR addr} - pushes the current PC to the stack and sets it to addr. Can be used to call subroutines}}'#13#10'\p{All word reads take one cycle (this includes instruction reads). The instructions ADD, SUB, MUL, SHR, JSR, IFE, IFN, IFG and IFB take an additional cycle (if the test fail for the last four, another extra cycle is used). The instructions DIV and MOD take two additional cycles.}'#13#10'}'#13#10
     left = 568
     top = 240
   end
@@ -1806,4 +1803,4 @@ object Main: TMain
       FF00FFFFFF00FFFFFF00FFFFFF00
     }
   end
-end
+end
