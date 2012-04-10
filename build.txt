@@ -49,7 +49,7 @@ Build Instructions
          program hello;
          begin
            writeln('hello, world!');
-         end;
+         end.
 
       save it as hello.pas and type fpc hello.  Then type ./hello and if the
       compiler was installed properly, you'll see the greeting
