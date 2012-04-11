@@ -111,6 +111,8 @@ type
     mCode: TSynEdit;
     sasAssembly: TSynAnySyn;
     StringListLazHelpProvider1: TStringListLazHelpProvider;
+    procedure ApplicationProperties1DropFiles(Sender: TObject;
+      const FileNames: array of String);
     procedure ApplicationProperties1Idle(Sender: TObject; var Done: Boolean);
     procedure btAssembleClick(Sender: TObject);
     procedure btResetClick(Sender: TObject);
@@ -173,6 +175,7 @@ type
     DataSymbols: array of TDataSymbol;
     LastBreakpointAddr: Integer;
     MemoryDumpNeedsUpdate: Boolean;
+    ShowUserScreenNextTime: Boolean;
     procedure OnMemoryChange(ASender: TObject; MemoryAddress: TMemoryAddress; var MemoryValue: Word);
     procedure OnRegisterChange(ASender: TObject; CPURegister: TCPURegister; var RegisterValue: Word);
     function OnBeforeExecution(ASender: TObject; MemoryAddress: TMemoryAddress): Boolean;
@@ -184,6 +187,7 @@ type
     function ConfirmOk: Boolean;
     procedure UpdateDataSymbols;
     procedure UpdateAllMonitors;
+    procedure TryOpenFile(AFileName: string);
   public
     procedure KeyWasTyped(Ch: Char);
     property CPU: TCPU read FCPU;
@@ -214,7 +218,7 @@ end;
 
 procedure TMain.FormCreate(Sender: TObject);
 var
-  I: Integer;
+  I, Size: Integer;
   S: string;
 
   procedure LoadFont;
@@ -282,9 +286,11 @@ begin
   CPU.OnBeforeExecution:=@OnBeforeExecution;
   LastKnownProgramSize:=$FFFF;
   Reset;
-  DisassembleFrom(0, $FFFF);
   lbDisassembly.ItemIndex:=0;
-  btAssembleClick(nil);
+  if ParamStrUTF8(1) <> '' then begin
+    TryOpenFile(ParamStrUTF8(1));
+  end else
+    btAssembleClick(nil);
 end;
 
 procedure TMain.FormDestroy(Sender: TObject);
@@ -618,6 +624,10 @@ begin
     lbMemoryDump.Invalidate;
     MemoryDumpNeedsUpdate:=False;
   end;
+  if ShowUserScreenNextTime then begin
+    mViewUserScreenClick(nil);
+    ShowUserScreenNextTime:=False;
+  end;
   NowTicks:=GetTickCount;
   if Running then begin
     if CycleExact then begin
@@ -645,6 +655,15 @@ begin
       SingleStep;
     DrawScreen;
   end else Sleep(1);
+end;
+
+procedure TMain.ApplicationProperties1DropFiles(Sender: TObject;
+  const FileNames: array of String);
+begin
+  if Length(FileNames) < 1 then Exit;
+  if Length(FileNames) > 1 then
+    MessageDlg('Too many files', 'DCPU-16 Studio cannot open multiple files. Only ' + FileNames[0] + ' will be opened.', mtWarning, [mbOK], 0);
+  TryOpenFile(FileNames[0]);
 end;
 
 procedure TMain.btAssembleClick(Sender: TObject);
@@ -948,6 +967,44 @@ begin
   pbScreen.Repaint;
   if InstructionAddresses[CPU.CPURegister[crPC]] > -1 then
     lbDisassembly.ItemIndex:=InstructionAddresses[CPU.CPURegister[crPC]];
+end;
+
+procedure TMain.TryOpenFile(AFileName: string);
+var
+  Size: Integer;
+begin
+  IgnoreFollow:=True;
+  if LowerCase(ExtractFileExt(AFileName))='.dcpu16' then begin
+    try
+      Size:=CPU.LoadProgramFromFile(AFileName);
+      mCode.Text:='';
+      WriteMessage('Loaded ' + IntToStr(Size) + ' words of program code');
+      DisassembleFrom(0, Size);
+      cbRunning.Checked:=True;
+      cbCycleExact.Checked:=True;
+      cbFollow.Checked:=False;
+      CycleExact:=True;
+      Running:=True;
+      ShowUserScreenNextTime:=True;
+    except
+      MessageDlg('Error', 'Failed to load program code from the file ' + AFileName + ': ' + Exception(ExceptObject).Message, mtError, [mbOK], 0);
+    end;
+  end else if LowerCase(ExtractFileExt(AFileName))='.dasm16' then begin
+    try
+      mCode.Lines.LoadFromFile(AFileName);
+      FileName:=AFileName;
+      mCode.Modified:=False;
+      Reset;
+      cbCycleExact.Checked:=False;
+      CycleExact:=False;
+      mAssemblyAssembleClick(nil);
+      DisassembleFrom(0, $FFFF);
+    except
+      MessageDlg('Error', 'Failed to open file ' + AFileName, mtError, [mbOK], 0);
+    end;
+  end else
+    MessageDlg('Error', 'Unknown file type for ' + AFileName, mtError, [mbOK], 0);
+  IgnoreFollow:=True;
 end;
 
 procedure TMain.KeyWasTyped(Ch: Char);

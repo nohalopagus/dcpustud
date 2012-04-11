@@ -3,6 +3,7 @@ object Main: TMain
   Height = 690
   Top = 128
   Width = 1016
+  AllowDropFiles = True
   Caption = 'DCPU-16 Studio'
   ClientHeight = 670
   ClientWidth = 1016
@@ -1413,12 +1414,13 @@ object Main: TMain
     ShowButtonGlyphs = sbgSystem
     Title = 'DCPU-16 Studio'
     OnIdle = ApplicationProperties1Idle
+    OnDropFiles = ApplicationProperties1DropFiles
     left = 552
     top = 40
   end
   object MainMenu1: TMainMenu
     left = 552
-    top = 129
+    top = 128
     object mFile: TMenuItem
       Caption = '&File'
       object mFileNew: TMenuItem
