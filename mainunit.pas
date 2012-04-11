@@ -7,7 +7,7 @@ interface
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
   Spin, ExtCtrls, Menus, DCPU16, LazHelp, SynEdit,
-  SynHighlighterAny, GraphType, LCLIntf, LCLType, types;
+  SynHighlighterAny, GraphType, LCLIntf, LCLType, ExtDlgs, types;
 
 const
   VideoStart = $8000;
@@ -71,6 +71,8 @@ type
     mAssemblyRemoveBreakpoints: TMenuItem;
     mCPUFullReset: TMenuItem;
     mCPUUseKeyboardBuffer: TMenuItem;
+    mViewBar2: TMenuItem;
+    mViewSaveScreenshot: TMenuItem;
     mViewJumpToAddress: TMenuItem;
     mViewClearMessages: TMenuItem;
     mViewBar1: TMenuItem;
@@ -97,6 +99,7 @@ type
     odProgram: TOpenDialog;
     pbScreen: TPaintBox;
     plScreen: TPanel;
+    spdSaveScreenshot: TSavePictureDialog;
     sdProgram: TSaveDialog;
     sdCode: TSaveDialog;
     seA: TSpinEdit;
@@ -146,6 +149,7 @@ type
     procedure mHelpContentsClick(Sender: TObject);
     procedure mViewClearMessagesClick(Sender: TObject);
     procedure mViewJumpToAddressClick(Sender: TObject);
+    procedure mViewSaveScreenshotClick(Sender: TObject);
     procedure mViewUserScreenClick(Sender: TObject);
     procedure pbScreenPaint(Sender: TObject);
     procedure seAChange(Sender: TObject);
@@ -510,7 +514,7 @@ end;
 
 procedure TMain.mHelpAboutClick(Sender: TObject);
 begin
-  ShowMessage('DCPU-16 Studio version 20120409' + LineEnding + 'Copyright (C) 2012 by Kostas Michalopoulos' + LineEnding + LineEnding + 'Made using FreePascal, Lazarus and the SynEdit editor component.');
+  ShowMessage('DCPU-16 Studio version 20120411' + LineEnding + 'Copyright (C) 2012 by Kostas Michalopoulos' + LineEnding + LineEnding + 'Made using FreePascal, Lazarus and the SynEdit editor component.');
 end;
 
 procedure TMain.mHelpContentsClick(Sender: TObject);
@@ -542,6 +546,30 @@ begin
     Exit;
   end;
   lbMemoryDump.ItemIndex:=NewAddr;
+end;
+
+procedure TMain.mViewSaveScreenshotClick(Sender: TObject);
+var
+  PNG: TPortableNetworkGraphic;
+  Year, Month, Day, Hour, Minute, Second, MilliSecond: Word;
+begin
+  DecodeDate(Now, Year, Month, Day);
+  DecodeTime(Now, Hour, Minute, Second, MilliSecond);
+  if FileName='' then
+    spdSaveScreenshot.FileName:='DCPU-16 Program Screenshot ' + IntToStr(Year) + '-' + IntToStr(Month) + '-' + IntToStr(Day) + ' ' + IntToStr(Hour) + '.' + IntToStr(Minute) + '.' + IntToStr(Second) + '.png'
+  else
+    spdSaveScreenshot.FileName:=ExtractFileName(ExtractFileNameWithoutExt(FileName)) + ' Screenshot ' + IntToStr(Year) + '-' + IntToStr(Month) + '-' + IntToStr(Day) + ' ' + IntToStr(Hour) + '.' + IntToStr(Minute) + '.' + IntToStr(Second) + '.png';
+  if not spdSaveScreenshot.Execute then Exit;
+  DrawScreen;
+  PNG:=TPortableNetworkGraphic.Create;
+  PNG.SetSize(512, 512);
+  PNG.Canvas.StretchDraw(Rect(0, 0, 511, 511), ScreenBitmap);
+  try
+    PNG.SaveToFile(Utf8ToAnsi(spdSaveScreenshot.FileName));
+    WriteMessage('Screenshot saved in ' + spdSaveScreenshot.FileName);
+  except
+  end;
+  FreeAndNil(PNG);
 end;
 
 procedure TMain.mViewUserScreenClick(Sender: TObject);

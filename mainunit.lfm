@@ -1467,6 +1467,14 @@ object Main: TMain
         Caption = '&Clear Messages'
         OnClick = mViewClearMessagesClick
       end
+      object mViewBar2: TMenuItem
+        Caption = '-'
+      end
+      object mViewSaveScreenshot: TMenuItem
+        Caption = '&Save Screenshot...'
+        ShortCut = 49235
+        OnClick = mViewSaveScreenshotClick
+      end
     end
     object mCPU: TMenuItem
       Caption = '&CPU'
@@ -1815,5 +1823,13 @@ object Main: TMain
       FF00103653FF103653FF103653FF103653FFFFFFFF00FFFFFF00FFFFFF00FFFF
       FF00FFFFFF00FFFFFF00FFFFFF00
     }
+  end
+  object spdSaveScreenshot: TSavePictureDialog
+    Title = 'Save Screenshot'
+    DefaultExt = '.png'
+    Filter = 'PNG Images (*.png)|*.png'
+    Options = [ofPathMustExist, ofEnableSizing, ofViewDetail]
+    left = 181
+    top = 178
   end
 end
