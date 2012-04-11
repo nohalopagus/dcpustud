@@ -69,6 +69,7 @@ type
     mCPUUseBigEndianWords: TMenuItem;
     mAssemblyRemoveBreakpoints: TMenuItem;
     mCPUFullReset: TMenuItem;
+    mViewJumpToAddress: TMenuItem;
     mViewClearMessages: TMenuItem;
     mViewBar1: TMenuItem;
     mViewUserScreen: TMenuItem;
@@ -140,6 +141,7 @@ type
     procedure mHelpAboutClick(Sender: TObject);
     procedure mHelpContentsClick(Sender: TObject);
     procedure mViewClearMessagesClick(Sender: TObject);
+    procedure mViewJumpToAddressClick(Sender: TObject);
     procedure mViewUserScreenClick(Sender: TObject);
     procedure pbScreenPaint(Sender: TObject);
     procedure seAChange(Sender: TObject);
@@ -512,6 +514,27 @@ end;
 procedure TMain.mViewClearMessagesClick(Sender: TObject);
 begin
   mMessages.Text:='';
+end;
+
+procedure TMain.mViewJumpToAddressClick(Sender: TObject);
+var
+  AddrStr: string;
+  NewAddr: Integer;
+begin
+  if lbMemoryDump.ItemIndex=-1 then AddrStr:='$0000' else AddrStr:='$' + HexStr(lbMemoryDump.ItemIndex, 4);
+  AddrStr:=InputBox('Jump to address', 'Address (0 to 65535 or $0000 to $FFFF or 0x0000 to 0xFFFF):', AddrStr);
+  if AddrStr='' then Exit;
+  try
+    NewAddr:=StrToInt(AddrStr);
+  except
+    MessageDlg('Error', 'Invalid number ' + AddrStr, mtError, [mbOK], 0);
+    Exit;
+  end;
+  if (NewAddr < 0) or (NewAddr > High(TMemoryAddress)) then begin
+    MessageDlg('Error', 'Address ' + AddrStr + ' outside of the valid address range (0..65535 or $0000..$FFFF)', mtError, [mbOK], 0);
+    Exit;
+  end;
+  lbMemoryDump.ItemIndex:=NewAddr;
 end;
 
 procedure TMain.mViewUserScreenClick(Sender: TObject);

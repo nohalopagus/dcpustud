@@ -1452,6 +1452,11 @@ object Main: TMain
         Caption = 'User Screen'
         OnClick = mViewUserScreenClick
       end
+      object mViewJumpToAddress: TMenuItem
+        Caption = '&Jump to Address...'
+        ShortCut = 16458
+        OnClick = mViewJumpToAddressClick
+      end
       object mViewBar1: TMenuItem
         Caption = '-'
       end
