@@ -906,7 +906,7 @@ begin
       for I:=0 to KeyboardBufferSize - 1 do
         CPU[KeyboardAddress + I]:=0;
     end else
-      CPU[KeyboardAddress + I]:=0;
+      CPU[KeyboardAddress]:=0;
   end;
   cbRunning.Checked:=False;
   if lbDisassembly.Items.Count > 0 then lbDisassembly.ItemIndex:=0;
