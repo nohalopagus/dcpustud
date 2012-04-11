@@ -12,6 +12,7 @@ uses
 const
   VideoStart = $8000;
   KeyboardAddress = $9000;
+  KeyboardBufferSize = 16;
 
 type
 
@@ -69,6 +70,7 @@ type
     mCPUUseBigEndianWords: TMenuItem;
     mAssemblyRemoveBreakpoints: TMenuItem;
     mCPUFullReset: TMenuItem;
+    mCPUUseKeyboardBuffer: TMenuItem;
     mViewJumpToAddress: TMenuItem;
     mViewClearMessages: TMenuItem;
     mViewBar1: TMenuItem;
@@ -374,7 +376,6 @@ begin
       HexStr(Index, 4) + ' (' + Format('%05d', [Index]) + '): ' + HexStr(CPU[Index], 4) + ' (' + Format('%05d', [CPU[Index]]) + ')',
       Style);
   end;
-
 end;
 
 procedure TMain.mAssemblyAssembleClick(Sender: TObject);
@@ -872,6 +873,13 @@ begin
     PrevRegValues[Reg]:=CPU.CPURegister[Reg];
     SpinEditByReg[Reg].Color:=clDefault;
   end;
+  if Visible then begin
+    if mCPUUseKeyboardBuffer.Checked then begin
+      for I:=0 to KeyboardBufferSize - 1 do
+        CPU[KeyboardAddress + I]:=0;
+    end else
+      CPU[KeyboardAddress + I]:=0;
+  end;
   cbRunning.Checked:=False;
   if lbDisassembly.Items.Count > 0 then lbDisassembly.ItemIndex:=0;
   lbMemoryDump.ItemIndex:=0;
@@ -1008,8 +1016,19 @@ begin
 end;
 
 procedure TMain.KeyWasTyped(Ch: Char);
+var
+  I: Integer;
 begin
-  if CPU[KeyboardAddress]=0 then CPU[KeyboardAddress]:=Ord(Ch) else Beep;
+  if mCPUUseKeyboardBuffer.Checked then begin
+    for I:=0 to KeyboardBufferSize - 1 do
+      if CPU[KeyboardAddress + I]=0 then begin
+        CPU[KeyboardAddress + I]:=Ord(Ch);
+        Exit;
+      end;
+    Beep;
+  end else begin
+    if CPU[KeyboardAddress]=0 then CPU[KeyboardAddress]:=Ord(Ch) else Beep;
+  end;
 end;
 
 end.

@@ -3,6 +3,7 @@ object Main: TMain
   Height = 690
   Top = 128
   Width = 1016
+  ActiveControl = cbFollow
   AllowDropFiles = True
   Caption = 'DCPU-16 Studio'
   ClientHeight = 670
@@ -1502,6 +1503,11 @@ object Main: TMain
         Caption = 'Use Big Endian Words'
         ShowAlwaysCheckable = True
         OnClick = mCPUUseBigEndianWordsClick
+      end
+      object mCPUUseKeyboardBuffer: TMenuItem
+        AutoCheck = True
+        Caption = 'Use Keyboard Buffer'
+        ShowAlwaysCheckable = True
       end
     end
     object mAssembly: TMenuItem
