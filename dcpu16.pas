@@ -851,7 +851,7 @@ var
   I: Integer;
 begin
   try
-    Stream:=TFileStream.Create(AFileName, fmCreate);
+    Stream:=TFileStream.Create(Utf8ToAnsi(AFileName), fmCreate);
     if UseBigEndianWords then begin
       for I:=0 to Length - 1 do begin
         Stream.WriteByte(Memory[I] shr 8);
@@ -876,7 +876,7 @@ var
 begin
   Result:=0;
   try
-    Stream:=TFileStream.Create(AFileName, fmOpenRead);
+    Stream:=TFileStream.Create(Utf8ToAnsi(AFileName), fmOpenRead);
     if Stream.Size div 2 > High(TMemoryAddress) + 1 then
       raise EDCPU16Exception.Create('Program too big to fit in DCPU-16 memory!');
     if UseBigEndianWords then begin
