@@ -170,6 +170,7 @@ type
     IgnoreFollow: Boolean;
     DataSymbols: array of TDataSymbol;
     LastBreakpointAddr: Integer;
+    MemoryDumpNeedsUpdate: Boolean;
     procedure OnMemoryChange(ASender: TObject; MemoryAddress: TMemoryAddress; var MemoryValue: Word);
     procedure OnRegisterChange(ASender: TObject; CPURegister: TCPURegister; var RegisterValue: Word);
     function OnBeforeExecution(ASender: TObject; MemoryAddress: TMemoryAddress): Boolean;
@@ -281,6 +282,7 @@ begin
   Reset;
   DisassembleFrom(0, $FFFF);
   lbDisassembly.ItemIndex:=0;
+  btAssembleClick(nil);
 end;
 
 procedure TMain.FormDestroy(Sender: TObject);
@@ -589,6 +591,10 @@ var
   Reg: TCPURegister;
 begin
   Done:=False;
+  if MemoryDumpNeedsUpdate then begin
+    lbMemoryDump.Invalidate;
+    MemoryDumpNeedsUpdate:=False;
+  end;
   NowTicks:=GetTickCount;
   if Running then begin
     if CycleExact then begin
@@ -704,7 +710,7 @@ var
 begin
   if CycleExact then Exit;
   if not IgnoreFollow then begin
-    lbMemoryDump.Invalidate;
+    MemoryDumpNeedsUpdate:=True;
     for I:=0 to High(DataSymbols) do
       with DataSymbols[I] do
         if Addr=MemoryAddress then begin
@@ -714,7 +720,7 @@ begin
   end;
   if cbFollow.Checked and not IgnoreFollow then begin
     lbMemoryDump.ItemIndex:=MemoryAddress;
-    Application.ProcessMessages;
+    MemoryDumpNeedsUpdate:=True;
   end;
 end;
 
@@ -927,4 +933,4 @@ begin
 end;
 
 end.
-
+
