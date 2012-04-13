@@ -1025,7 +1025,10 @@ begin
     except
       MessageDlg('Error', 'Failed to load program code from the file ' + AFileName + ': ' + Exception(ExceptObject).Message, mtError, [mbOK], 0);
     end;
-  end else if LowerCase(ExtractFileExt(AFileName))='.dasm16' then begin
+  end else if (LowerCase(ExtractFileExt(AFileName))='.dasm16') or
+              (LowerCase(ExtractFileExt(AFileName))='.dasm') or
+              (LowerCase(ExtractFileExt(AFileName))='.asm') or
+              (LowerCase(ExtractFileExt(AFileName))='.txt') then begin
     try
       mCode.Lines.LoadFromFile(AFileName);
       FileName:=AFileName;

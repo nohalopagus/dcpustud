@@ -1724,7 +1724,7 @@ object Main: TMain
   object odCode: TOpenDialog
     Title = 'Open Assembly Code'
     DefaultExt = '.dasm16'
-    Filter = 'DCPU-16 Assembly (*.dasm16)|*.dasm16|All files|*.*;*'
+    Filter = 'DCPU-16 Assembly (*.dasm16;*.dasm;*.asm)|*.dasm16;*.dasm;*.asm|Text files (*.txt)|*.txt|All files|*.*;*'
     Options = [ofFileMustExist, ofEnableSizing, ofViewDetail]
     left = 39
     top = 54
