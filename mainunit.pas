@@ -926,12 +926,12 @@ var
   procedure DrawChar(X, Y: Integer; Cell: Word);
   const
     {$IFDEF WINDOWS}
-    RealColors: array [0..15] of TColor =
+    RealColors: array [0..15] of Cardinal =
                  ($101010, $1000AA, $10AA10, $10AAAA, $AA1010, $AA10AA, $AA5010,
                   $AAAAAA, $808080, $1010ff, $10FF10, $10FFFF, $FF1010, $FF10FF,
                   $FFFF10, $FFFFFF);
     {$ELSE}
-    RealColors: array [0..15] of TColor =
+    RealColors: array [0..15] of Cardinal =
                  ($FF101010, $FFAA1010, $FF10AA10, $FFAAAA10, $FF1010AA, $FFAA10AA, $FF1050AA,
                   $FFAAAAAA, $FF808080, $FFFF1010, $FF10FF10, $FFFFFF10, $FF1010FF, $FFFF10FF,
                   $FF10FFFF, $FFFFFFFF);
