@@ -127,6 +127,7 @@ type
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormCreate(Sender: TObject);
     procedure FormDestroy(Sender: TObject);
+    procedure lbDataSymbolsDblClick(Sender: TObject);
     procedure lbDisassemblyDblClick(Sender: TObject);
     procedure lbDisassemblyDrawItem(Control: TWinControl; Index: Integer;
       ARect: TRect; State: TOwnerDrawState);
@@ -302,6 +303,12 @@ end;
 procedure TMain.FormDestroy(Sender: TObject);
 begin
   FreeAndNil(ScreenBitmap);
+end;
+
+procedure TMain.lbDataSymbolsDblClick(Sender: TObject);
+begin
+  if lbDataSymbols.ItemIndex=-1 then Exit;
+  lbMemoryDump.ItemIndex:=DataSymbols[lbDataSymbols.ItemIndex].Addr;
 end;
 
 procedure TMain.lbDisassemblyDblClick(Sender: TObject);
