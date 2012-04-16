@@ -75,6 +75,7 @@ type
   TAssembler = class
   private
     FOpCodes: array of Word;
+    CurrentORG: Word;
     Code: string;
     Head, Len: Integer;
     FError: Boolean;
@@ -87,6 +88,8 @@ type
     procedure AddSymbol(AName: string; CodePos: Integer; Addr: TMemoryAddress);
     procedure AddFixup(AName: string; CodePos: Integer; Addr: TMemoryAddress);
     procedure AddWord(W: Word);
+    procedure SetORG(L: Word);
+    procedure AssembleORG;
     function GetOpCodes(AIndex: TMemoryAddress): Word; inline;
     function GetSize: TMemoryAddress; inline;
     function GetSymbolCount: Integer; inline;
@@ -156,10 +159,19 @@ begin
   Fixups[High(Fixups)].CodePos:=CodePos;
 end;
 
+procedure TAssembler.SetORG(L: Word);
+begin
+     CurrentORG := L
+end;
+
 procedure TAssembler.AddWord(W: Word);
 begin
-  SetLength(FOpCodes, Length(FOpCodes) + 1);
-  FOpCodes[High(FOpCodes)]:=W;
+  while Length(FOpCodes) <= CurrentORG do begin
+        SetLength(FOpCodes, Length(FOpCodes) + 1);
+        FOpCodes[High(FOpCodes)]:=0;
+  end;
+  FOpCodes[CurrentORG]:=W;
+  CurrentORG:=CurrentORG+1;
 end;
 
 function TAssembler.GetOpCodes(AIndex: TMemoryAddress): Word;
@@ -265,6 +277,7 @@ var
   Found: Boolean;
   I: Integer;
 begin
+  CurrentORG := 0;
   if DataSymbol and (Length(FSymbols) > 0) then begin
     FSymbols[High(FSymbols)].ForData:=True;
     DataSymbol:=False;
@@ -353,6 +366,27 @@ begin
     Exit;
   end;
   for I:=1 to NextNumber do AddWord(0);
+end;
+
+procedure TAssembler.AssembleORG;
+var
+  I: Integer;
+begin
+  if DataSymbol and (Length(FSymbols) > 0) then begin
+    FSymbols[High(FSymbols)].ForData:=True;
+    DataSymbol:=False;
+  end;
+  SkipSpaces;
+  if Head > Len then begin
+    SetError('Unexpected end of code in ORG', Head);
+    Exit;
+  end;
+  if not (Code[Head] in ['0'..'9', '$', '-']) then begin
+    SetError('Number expected in ORG', Head);
+    Exit;
+  end;
+  I:=NextNumber;
+  CurrentORG:=I;
 end;
 
 procedure TAssembler.AssembleInstruction;
@@ -448,7 +482,7 @@ var
             AddWord(FSymbols[I].Address);
             goto fuckit;
           end;
-        AddFixup(Token, TokenHead, Size);
+        AddFixup(Token, TokenHead, CurrentORG);
         AddWord(0);
         fuckit:
         SkipSpaces;
@@ -500,14 +534,14 @@ var
         for I:=SymbolCount - 1 downto 0 do
           if FSymbols[I].Name=Token then
             Exit(WriteLiteral(FSymbols[I].Address));
-        AddFixup(Token, TokenHead, Size);
+        AddFixup(Token, TokenHead, CurrentORG);
         AddWord(0);
         Exit($1F);
       end;
     end;
 
   begin
-    IAddr:=Size;
+    IAddr:=CurrentORG;
     AddWord(0);
     for I:=0 to CPUInstructionArguments[AInstr] - 1 do begin
       if Error then Break;
@@ -543,6 +577,10 @@ begin
   end;
   if (InstrName='RESW') or (InstrName='RESERVE') then begin
     AssembleReserve;
+    Exit;
+  end;
+  if (InstrName='ORG') then begin
+    AssembleORG;
     Exit;
   end;
   for Instr:=Low(TCPUInstruction) to High(TCPUInstruction) do begin
