@@ -175,6 +175,7 @@ type
     Breakpoint, ExecutedMark: array [TMemoryAddress] of Boolean;
     LastKnownProgramSize: Integer;
     ScreenBitmap: TBitmap;
+    KeyboardPosition: Integer;
     NowTicks, LastTicks: Cardinal;
     CycleExact: Boolean;
     Running: Boolean;
@@ -910,6 +911,7 @@ begin
   end;
   if Visible then begin
     if mCPUUseKeyboardBuffer.Checked then begin
+      KeyboardPosition := 0;
       for I:=0 to KeyboardBufferSize - 1 do
         CPU[KeyboardAddress + I]:=0;
     end else
@@ -1054,20 +1056,18 @@ begin
 end;
 
 procedure TMain.KeyWasTyped(Ch: Char);
-var
-  I: Integer;
 begin
   if mCPUUseKeyboardBuffer.Checked then begin
-    for I:=0 to KeyboardBufferSize - 1 do
-      if CPU[KeyboardAddress + I]=0 then begin
-        CPU[KeyboardAddress + I]:=Ord(Ch);
-        Exit;
-      end;
-    Beep;
+    if CPU[KeyboardAddress + KeyboardPosition]=0 then begin
+      CPU[KeyboardAddress + KeyboardPosition]:=Ord(Ch);
+      KeyboardPosition := (KeyboardPosition + 1) mod KeyboardBufferSize;
+    end else begin
+      Beep;
+    end;
   end else begin
     if CPU[KeyboardAddress]=0 then CPU[KeyboardAddress]:=Ord(Ch) else Beep;
   end;
 end;
 
 end.
-
+
