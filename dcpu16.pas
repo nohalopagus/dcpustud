@@ -147,7 +147,7 @@ begin
   for I:=0 to High(Fixups) do
     if Fixups[I].Name=AName then begin
       Fixups[I].Name:='';
-      FOpCodes[Fixups[I].Address]:=Addr;
+      OpCodes[Fixups[I].Address]:=Addr;
     end;
 end;
 
@@ -167,10 +167,10 @@ end;
 procedure TAssembler.AddWord(W: Word);
 begin
   while Length(FOpCodes) < CurrentORG+1 do begin
-        SetLength(FOpCodes, Length(FOpCodes) + 1);
+    SetLength(FOpCodes, Length(FOpCodes) + 1);
   end;
 
-  FOpCodes[CurrentORG]:=W;
+  OpCodes[CurrentORG]:=W;
   CurrentORG:=CurrentORG+1;
 end;
 
@@ -553,9 +553,9 @@ var
       Args[I]:=AssembleArgument;
     end;
     if Ord(AInstr) < Ord(ciReserved) then begin
-      FOpCodes[IAddr]:=Ord(AInstr) or (Args[0] shl 4) or (Args[1] shl 10);
+      OpCodes[IAddr]:=Ord(AInstr) or (Args[0] shl 4) or (Args[1] shl 10);
     end else begin
-      FOpCodes[IAddr]:=((Ord(AInstr) - Ord(ciReserved)) shl 4) or (Args[0] shl 10);
+      OpCodes[IAddr]:=((Ord(AInstr) - Ord(ciReserved)) shl 4) or (Args[0] shl 10);
     end;
   end;
 
