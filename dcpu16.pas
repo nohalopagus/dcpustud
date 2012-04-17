@@ -70,6 +70,11 @@ type
     ForData: Boolean;
   end;
 
+  TNameValue = record
+    Name: string;
+    Value: TMemoryAddress;
+  end;
+
   { TAssembler }
 
   TAssembler = class
@@ -82,14 +87,15 @@ type
     FErrorMessage: string;
     FErrorPos: Integer;
     FSymbols: array of TNameAddr;
+    FDefines: array of TNameValue;
     Fixups: array of TNameAddr;
     TokenHead: Integer;
     DataSymbol: Boolean;
     procedure AddSymbol(AName: string; CodePos: Integer; Addr: TMemoryAddress);
+    procedure AddDefine(AName: string; AValue: TMemoryAddress);
     procedure AddFixup(AName: string; CodePos: Integer; Addr: TMemoryAddress);
     procedure AddWord(W: Word);
     procedure SetORG(L: TMemoryAddress);
-    procedure AssembleORG;
     function GetOpCodes(AIndex: TMemoryAddress): Word; inline;
     function GetSize: TMemoryAddress; inline;
     function GetSymbolCount: Integer; inline;
@@ -103,6 +109,11 @@ type
     procedure AssembleData;
     procedure AssembleReserve;
     procedure AssembleInstruction;
+    procedure AssembleORG;
+    procedure ParseDefine;
+    function isDefinedNext: Boolean; inline;
+    function isDefined(AName: string): Boolean; inline;
+    function getDefined(AName: string): TMemoryAddress; inline;
   public
     procedure Assemble(ACode: string);
     property OpCodes[AIndex: TMemoryAddress]: Word read GetOpCodes write SetOpCodes; default;
@@ -149,6 +160,54 @@ begin
       Fixups[I].Name:='';
       FOpCodes[Fixups[I].Address]:=Addr;
     end;
+end;
+
+procedure TAssembler.AddDefine(AName: string; AValue: TMemoryAddress);
+var
+  I: Integer;
+begin
+  if isDefined(AName) then begin
+    SetError('Redefinitions are not allowed', Head);
+    Exit;
+  end;
+
+  SetLength(FDefines, Length(FDefines) + 1);
+  FDefines[High(FDefines)].Name:=AName;
+  FDefines[High(FDefines)].Value:=AValue;
+end;
+
+function TAssembler.isDefined(AName: string): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  for I := 0 to High(FDefines) do
+      if FDefines[I].Name = AName then begin
+        Result := True;
+        break;
+      end;
+end;
+
+function TAssembler.isDefinedNext: Boolean;
+var
+  Token: string;
+  I: Integer;
+begin
+  I := Head;
+  Token := NextToken;
+  Head := I;
+  Result := (Token<>'') and isDefined(Token);
+end;
+
+function TAssembler.getDefined(AName: string): TMemoryAddress;
+var
+  I: Integer;
+begin
+  for I := 0 to High(FDefines) do
+      if FDefines[I].Name = AName then begin
+          Result := FDefines[I].Value;
+          break;
+        end;
 end;
 
 procedure TAssembler.AddFixup(AName: string; CodePos: Integer; Addr: TMemoryAddress);
@@ -330,6 +389,11 @@ begin
           Exit;
         end;
       Found:=False;
+      if isDefined(Token) then begin
+          AddWord(getDefined(Token));
+          Found:=True;
+          Break;
+        end;
       for I:=0 to High(FSymbols) do
         if Symbols[I].Name=Token then begin
           AddWord(FSymbols[I].Address);
@@ -376,11 +440,49 @@ begin
     SetError('Unexpected end of code in ORG', Head);
     Exit;
   end;
-  if not (Code[Head] in ['0'..'9', '$', '-']) then begin
-    SetError('Number expected in ORG', Head);
+  if (Code[Head] in ['0'..'9', '$', '-']) then begin
+    I := NextNumber;
+  end else if isDefinedNext then begin
+    I := getDefined(NextToken);
+  end else begin
+      SetError('Number or DEF symbol expected in ORG', Head);
+      Exit;
+  end;
+  CurrentORG := I;
+end;
+
+procedure TAssembler.ParseDefine;
+var
+  I: Integer;
+  Token: string;
+  Reg: TCPURegister;
+begin
+  SkipSpaces;
+  if Head > Len then begin
+    SetError('Unexpected end of code in DEF', Head);
     Exit;
   end;
-  CurrentORG:=NextNumber;
+  if (Code[Head] in ['0'..'9', '$', '-']) then begin
+    SetError('Name expected in DEF', Head);
+    Exit;
+  end;
+  Token:=NextToken;
+  for Reg:=crA to crO do
+    if CPURegisterNames[Reg]=Token then begin
+      SetError('Cannot use a register in DEF', TokenHead);
+      Exit;
+    end;
+  SkipSpaces;
+  if Head > Len then begin
+    SetError('Unexpected end of code in DEF', Head);
+    Exit;
+  end;
+  if not (Code[Head] in ['0'..'9', '$', '-']) then begin
+    SetError('Value expected in DEF', Head);
+    Exit;
+  end;
+  I := NextNumber and $FFFF;
+  AddDefine(Token, I);
 end;
 
 procedure TAssembler.AssembleInstruction;
@@ -422,8 +524,12 @@ var
           SetError('Unexpected end of code inside memory access parameter for ' + CPUInstructionNames[AInstr], Head);
           Exit(0);
         end;
-        if Code[Head] in ['0'..'9', '$'] then begin
-          I:=NextNumber and $FFFF;
+        if (Code[Head] in ['0'..'9', '$']) or isDefinedNext then begin
+          if isDefinedNext then begin
+            I := getDefined(NextToken);
+          end else begin
+            I := NextNumber and $FFFF;
+          end;
           SkipSpaces;
           if Head > Len then begin
             SetError('Unexpected end of code inside memory access parameter for ' + CPUInstructionNames[AInstr] + ' after address', Head);
@@ -470,6 +576,10 @@ var
             else
               Inc(Head);
             Exit($08 + Ord(Reg));
+          end;
+        if isDefined(Token) then begin
+             AddWord(getDefined(Token));
+             goto fuckit;
           end;
         for I:=SymbolCount - 1 downto 0 do
           if FSymbols[I].Name=Token then begin
@@ -525,6 +635,8 @@ var
         for Reg:=crA to crJ do
           if CPURegisterNames[Reg]=Token then
             Exit(Ord(Reg));
+        if isDefined(Token) then
+          Exit(WriteLiteral(getDefined(Token)));
         for I:=SymbolCount - 1 downto 0 do
           if FSymbols[I].Name=Token then
             Exit(WriteLiteral(FSymbols[I].Address));
@@ -575,6 +687,10 @@ begin
   end;
   if (InstrName='ORG') then begin
     AssembleORG;
+    Exit;
+  end;
+  if (InstrName='DEF') then begin
+    ParseDefine;
     Exit;
   end;
   for Instr:=Low(TCPUInstruction) to High(TCPUInstruction) do begin
