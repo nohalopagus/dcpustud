@@ -75,7 +75,7 @@ type
   TAssembler = class
   private
     FOpCodes: array of Word;
-    CurrentORG: Word;
+    CurrentORG: TMemoryAddress;
     Code: string;
     Head, Len: Integer;
     FError: Boolean;
@@ -88,7 +88,7 @@ type
     procedure AddSymbol(AName: string; CodePos: Integer; Addr: TMemoryAddress);
     procedure AddFixup(AName: string; CodePos: Integer; Addr: TMemoryAddress);
     procedure AddWord(W: Word);
-    procedure SetORG(L: Word);
+    procedure SetORG(L: TMemoryAddress);
     procedure AssembleORG;
     function GetOpCodes(AIndex: TMemoryAddress): Word; inline;
     function GetSize: TMemoryAddress; inline;
@@ -159,17 +159,17 @@ begin
   Fixups[High(Fixups)].CodePos:=CodePos;
 end;
 
-procedure TAssembler.SetORG(L: Word);
+procedure TAssembler.SetORG(L: TMemoryAddress);
 begin
      CurrentORG := L
 end;
 
 procedure TAssembler.AddWord(W: Word);
 begin
-  while Length(FOpCodes) <= CurrentORG do begin
+  while Length(FOpCodes) < CurrentORG+1 do begin
         SetLength(FOpCodes, Length(FOpCodes) + 1);
-        FOpCodes[High(FOpCodes)]:=0;
   end;
+
   FOpCodes[CurrentORG]:=W;
   CurrentORG:=CurrentORG+1;
 end;
@@ -265,7 +265,7 @@ var
 begin
   Inc(Head);
   LabelName:=NextToken;
-  AddSymbol(LabelName, TokenHead, Size);
+  AddSymbol(LabelName, TokenHead, CurrentORG);
   DataSymbol:=True;
 end;
 
@@ -277,7 +277,6 @@ var
   Found: Boolean;
   I: Integer;
 begin
-  CurrentORG := 0;
   if DataSymbol and (Length(FSymbols) > 0) then begin
     FSymbols[High(FSymbols)].ForData:=True;
     DataSymbol:=False;
@@ -338,7 +337,7 @@ begin
           Break;
         end;
       if not Found then begin
-        AddFixup(Token, TokenHead, Size);
+        AddFixup(Token, TokenHead, CurrentORG);
         AddWord(0);
       end;
     end;
@@ -372,10 +371,6 @@ procedure TAssembler.AssembleORG;
 var
   I: Integer;
 begin
-  if DataSymbol and (Length(FSymbols) > 0) then begin
-    FSymbols[High(FSymbols)].ForData:=True;
-    DataSymbol:=False;
-  end;
   SkipSpaces;
   if Head > Len then begin
     SetError('Unexpected end of code in ORG', Head);
@@ -385,8 +380,7 @@ begin
     SetError('Number expected in ORG', Head);
     Exit;
   end;
-  I:=NextNumber;
-  CurrentORG:=I;
+  CurrentORG:=NextNumber;
 end;
 
 procedure TAssembler.AssembleInstruction;
@@ -559,9 +553,9 @@ var
       Args[I]:=AssembleArgument;
     end;
     if Ord(AInstr) < Ord(ciReserved) then begin
-      OpCodes[IAddr]:=Ord(AInstr) or (Args[0] shl 4) or (Args[1] shl 10);
+      FOpCodes[IAddr]:=Ord(AInstr) or (Args[0] shl 4) or (Args[1] shl 10);
     end else begin
-      OpCodes[IAddr]:=((Ord(AInstr) - Ord(ciReserved)) shl 4) or (Args[0] shl 10);
+      FOpCodes[IAddr]:=((Ord(AInstr) - Ord(ciReserved)) shl 4) or (Args[0] shl 10);
     end;
   end;
 
