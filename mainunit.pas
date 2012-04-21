@@ -671,6 +671,7 @@ begin
       for Reg:=crA to crO do
         SpinEditByReg[Reg].Color:=clDefault;
       try
+        if NowTicks - LastTicks > 5000 then LastTicks:=NowTicks;
         while NowTicks - LastTicks > 10 do begin
           CyclesToRun:=1000;
           while CyclesToRun > 1 do begin
@@ -1070,4 +1071,4 @@ begin
 end;
 
 end.
-
+
