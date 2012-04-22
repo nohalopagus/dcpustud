@@ -6,8 +6,8 @@ interface
 
 uses
   Classes, SysUtils, FileUtil, Forms, Controls, Graphics, Dialogs, StdCtrls,
-  Spin, ExtCtrls, Menus, DCPU16, LazHelp, SynEdit,
-  SynHighlighterAny, GraphType, LCLIntf, LCLType, ExtDlgs, types;
+  Spin, ExtCtrls, Menus, DCPU16, LazHelp, SynEdit, DTokenizer, DPreprocessor, DAssembler,
+  SynHighlighterAny, GraphType, LCLIntf, LCLType, ExtDlgs, types, DCPUtypes;
 
 const
   VideoStart = $8000;
@@ -707,20 +707,58 @@ procedure TMain.btAssembleClick(Sender: TObject);
 var
   Ass: TAssembler;
   I: Integer;
+  J: Integer;
   MemDump: string;
+  tokenizer: CTokenizer;
+  preprocessor: CPreprocessor;
+  tmp: string;
+  aError: TAssemblerError;
+  tError: TTokenizerError;
+  ppError: TPreprocessorError;
 begin
-  Ass:=TAssembler.Create;
+  tokenizer := CTokenizer.Create();
+
   IgnoreFollow:=True;
+  WriteMessage('Tokenizing...');
+  tokenizer.upcaseSymbols:=true;
+  tokenizer.tokenize(mCode.Text, FileName);
+  if Length(tokenizer.errors)>0 then begin
+     for tError in tokenizer.errors do begin
+         WriteMessage(tError.sourceFile+':'+inttostr(tError.line)+': '+tError.message);
+     end;
+     FreeAndNil(tokenizer);
+     MessageDlg('Error in code', 'Error while parsing source, see message window', mtError, [mbOK], 0);
+     exit;
+  end;
+  preprocessor := CPreprocessor.Create();
+  WriteMessage('Preprocessing...');
+  preprocessor.preprocess(tokenizer.tokenized);
+  if Length(preprocessor.errors)>0 then begin
+     for ppError in preprocessor.errors do begin
+         WriteMessage(ppError.sourceFile+':'+inttostr(ppError.line)+': '+ppError.message);
+     end;
+     FreeAndNil(tokenizer);
+     FreeAndNil(preprocessor);
+     MessageDlg('Error in code', 'Error while parsing source, see message window', mtError, [mbOK], 0);
+     exit;
+  end;
+
+  Ass:=TAssembler.Create;
   try
     WriteMessage('Assembling...');
-    Ass.Assemble(mCode.Text);
+    Ass.Assemble(preprocessor.preprocessed);
     Reset;
     IgnoreFollow:=True;
-    if Ass.Error then begin
-      WriteMessage('Assembly error: ' + Ass.ErrorMessage);
-      mCode.SelStart:=Ass.ErrorPos;
-      mCode.SetFocus;
-      MessageDlg('Error in code', Ass.ErrorMessage, mtError, [mbOK], 0);
+    if length(Ass.errors)>0 then begin
+      for aError in Ass.errors do
+        if aError.token.length>0 then begin
+          WriteMessage(aError.line.sourceFile+':'+inttostr(aError.line.lineNumber)+': '+aError.message+' - at token: '+aError.token.strVal);
+        end else begin
+          WriteMessage(aError.line.sourceFile+':'+inttostr(aError.line.lineNumber)+': '+aError.message);
+        end;
+      //mCode.SelStart:=Ass.ErrorPos;
+      //mCode.SetFocus;
+      MessageDlg('Error in code', 'Error while assembling, see message window', mtError, [mbOK], 0);
     end else begin
       MemDump:='Memory Dump:' + LineEnding + '  0000:';
       for I:=0 to Ass.Size - 1 do begin
@@ -751,6 +789,8 @@ begin
     WriteMessage('Assembly failed due to an internal error: ' + Exception(ExceptObject).Message);
   end;
   FreeAndNil(Ass);
+  FreeAndNil(preprocessor);
+  FreeAndNil(tokenizer);
   IgnoreFollow:=False;
   UpdateAllMonitors;
 end;
@@ -1070,4 +1110,4 @@ begin
 end;
 
 end.
-
+
