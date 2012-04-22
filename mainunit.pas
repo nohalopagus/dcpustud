@@ -715,16 +715,20 @@ var
   aError: TAssemblerError;
   tError: TTokenizerError;
   ppError: TPreprocessorError;
+  currentFile: string;
 begin
   tokenizer := CTokenizer.Create();
-
+  if FileName='' then
+    currentFile:='<buffer>'
+  else
+    currentFile:=FileName;
   IgnoreFollow:=True;
   WriteMessage('Tokenizing...');
   tokenizer.upcaseSymbols:=true;
-  tokenizer.tokenize(mCode.Text, FileName);
+  tokenizer.tokenize(mCode.Text, currentFile);
   if Length(tokenizer.errors)>0 then begin
      for tError in tokenizer.errors do begin
-         WriteMessage(tError.sourceFile+':'+inttostr(tError.line)+': '+tError.message);
+         WriteMessage(tError.sourceFile+':'+inttostr(tError.line)+': error: '+tError.message);
      end;
      FreeAndNil(tokenizer);
      MessageDlg('Error in code', 'Error while parsing source, see message window', mtError, [mbOK], 0);
@@ -735,13 +739,19 @@ begin
   preprocessor.preprocess(tokenizer.tokenized);
   if Length(preprocessor.errors)>0 then begin
      for ppError in preprocessor.errors do begin
-         WriteMessage(ppError.sourceFile+':'+inttostr(ppError.line)+': '+ppError.message);
+         WriteMessage(ppError.sourceFile+':'+inttostr(ppError.line)+': error: '+ppError.message);
      end;
      FreeAndNil(tokenizer);
      FreeAndNil(preprocessor);
      MessageDlg('Error in code', 'Error while parsing source, see message window', mtError, [mbOK], 0);
      exit;
   end;
+
+  //if Length(preprocessor.warnings)>0 then begin
+     for ppError in preprocessor.warnings do begin
+         WriteMessage(ppError.sourceFile+':'+inttostr(ppError.line)+': warning: '+ppError.message);
+     end;
+  //end;
 
   Ass:=TAssembler.Create;
   try
