@@ -14,11 +14,30 @@ type
     TWordArray = array of TMemoryAddress;
     TResourceAddress = $0..High(TMemoryAddress) + Ord(High(TCPURegister)) + 2;
 
+    TToken = record
+      tokenType: TTokenType;
+      intVal: integer;
+      strVal: string;
+      length: integer;
+      linePos: integer; //offset into line where the token starts
+    end;
+    TTokens = array of TToken;
+
+    TTokenizedLine = record
+      tokens: TTokens;
+      lineNumber: integer;
+      sourceFile: string;
+      sourcePos: integer; //offset into source file where line starts
+    end;
+    TTokenizedLines = array of TTokenizedLine;
+
     TNameAddr = record
       Name: string;
       Address: TMemoryAddress;
-      CodePos: Integer;
       ForData: Boolean;
+
+      line: TTokenizedLine;
+      token: TToken;
     end;
 
     TNameValue = record
@@ -26,11 +45,21 @@ type
       Value: TMemoryAddress;
     end;
 
+    TSimpleError = record
+       message: string;
+       line: integer;
+       sourceFile: string;
+     end;
+     TSimpleErrors = array of TSimpleError;
+
 const
   CPURegisterNames: array [TCPURegister] of string = ('A', 'B', 'C', 'X', 'Y', 'Z', 'I', 'J', 'PC', 'SP', 'O');
   CPUInstructionNames: array [TCPUInstruction] of string = ('Extended Prefix', 'SET', 'ADD', 'SUB', 'MUL', 'DIV',
                        'MOD', 'SHL', 'SHR', 'AND', 'BOR', 'XOR', 'IFE', 'IFN', 'IFG', 'IFB', 'Reserved ', 'JSR', 'ERROR - Invalid');
   CPUInstructionArguments: array [TCPUInstruction] of Integer = (0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 1, 0);
+
+  defaultDefineValue: TToken = (tokenType:ttSymbol; intVal: 0; strVal:'0'; length: 0; linePos:0 );
+
 
 function isCPURegisterName(symbol: string): boolean;
 function getCPURegisterID(symbol: string): TCPURegister;

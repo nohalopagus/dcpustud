@@ -713,8 +713,7 @@ var
   preprocessor: CPreprocessor;
   tmp: string;
   aError: TAssemblerError;
-  tError: TTokenizerError;
-  ppError: TPreprocessorError;
+  sError: TSimpleError;
   currentFile: string;
 begin
   tokenizer := CTokenizer.Create();
@@ -727,8 +726,8 @@ begin
   tokenizer.upcaseSymbols:=true;
   tokenizer.tokenize(mCode.Text, currentFile);
   if Length(tokenizer.errors)>0 then begin
-     for tError in tokenizer.errors do begin
-         WriteMessage(tError.sourceFile+':'+inttostr(tError.line)+': error: '+tError.message);
+     for sError in tokenizer.errors do begin
+         WriteMessage(sError.sourceFile+':'+inttostr(sError.line)+': error: '+sError.message);
      end;
      FreeAndNil(tokenizer);
      MessageDlg('Error in code', 'Error while parsing source, see message window', mtError, [mbOK], 0);
@@ -738,8 +737,8 @@ begin
   WriteMessage('Preprocessing...');
   preprocessor.preprocess(tokenizer.tokenized);
   if Length(preprocessor.errors)>0 then begin
-     for ppError in preprocessor.errors do begin
-         WriteMessage(ppError.sourceFile+':'+inttostr(ppError.line)+': error: '+ppError.message);
+     for sError in preprocessor.errors do begin
+         WriteMessage(sError.sourceFile+':'+inttostr(sError.line)+': error: '+sError.message);
      end;
      FreeAndNil(tokenizer);
      FreeAndNil(preprocessor);
@@ -748,8 +747,8 @@ begin
   end;
 
   //if Length(preprocessor.warnings)>0 then begin
-     for ppError in preprocessor.warnings do begin
-         WriteMessage(ppError.sourceFile+':'+inttostr(ppError.line)+': warning: '+ppError.message);
+     for sError in preprocessor.warnings do begin
+         WriteMessage(sError.sourceFile+':'+inttostr(sError.line)+': warning: '+sError.message);
      end;
   //end;
 

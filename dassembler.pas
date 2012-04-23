@@ -41,24 +41,30 @@ type
     function isOpenBracket(): Boolean;
     function isCloseBracket(): Boolean;
     function isDirective(): boolean;
+    function isDData(str: string):boolean;
+    function isDReserve(str: string):boolean;
+    function isDORG(str: string):boolean;
+
     procedure parseDirective();
 
-    procedure AddSymbol(AName: string;Addr: TMemoryAddress; CodePos: Integer);
-    procedure AddFixup(AName: string; CodePos: Integer; Addr: TMemoryAddress);
+    procedure AddSymbol(AName: string; Addr: TMemoryAddress; token: TToken);
+    procedure AddFixup(AName: string; Addr: TMemoryAddress; token: TToken);
     procedure AddWord(W: Word);
-    procedure SetORG(L: TMemoryAddress);
+    procedure SetORG(address: TMemoryAddress);
     function GetOpCodes(AIndex: TMemoryAddress): Word; inline;
     function GetSize: TMemoryAddress; inline;
     function GetSymbolCount: Integer; inline;
     function GetSymbols(AIndex: Integer): TNameAddr; inline;
     procedure SetOpCodes(AIndex: TMemoryAddress; const AValue: Word); inline;
-    procedure AssembleLabel;
-    procedure AssembleData;
-    procedure AssembleReserve;
-    procedure AssembleInstruction;
-    procedure AssembleORG;
+
+    procedure AssembleLabel();
+    procedure AssembleData();
+    procedure AssembleReserve();
+    procedure AssembleInstruction();
+    procedure AssembleORG();
 
     procedure addError(message: string; token: TToken);
+    procedure addError(message: string; line: TTokenizedLine);
     procedure addError(message: string);
   public
     errors: TAssemblerErrorList;
@@ -72,7 +78,7 @@ end;
 
 implementation
 
-procedure TAssembler.AddSymbol(AName: string; Addr: TMemoryAddress; CodePos: Integer);
+procedure TAssembler.AddSymbol(AName: string; Addr: TMemoryAddress; token: TToken);
 var
   n: Integer;
 begin
@@ -81,31 +87,38 @@ begin
   FSymbols[n].Name:=AName;
   FSymbols[n].Address:=Addr;
   FSymbols[n].ForData:=False;
-  FSymbols[n].CodePos:=CodePos;
+
+  FSymbols[n].line:=currentLine;
+  FSymbols[n].token:=token;
 end;
 
 
-procedure TAssembler.AddFixup(AName: string; CodePos: Integer; Addr: TMemoryAddress);
+procedure TAssembler.AddFixup(AName: string; Addr: TMemoryAddress; token: TToken);
+var
+  n: Integer;
 begin
-  SetLength(Fixups, Length(Fixups) + 1);
-  Fixups[High(Fixups)].Name:=AName;
-  Fixups[High(Fixups)].Address:=Addr;
-  Fixups[High(Fixups)].CodePos:=CodePos;
+  n := Length(Fixups);
+  SetLength(Fixups, n + 1);
+  Fixups[n].Name:=AName;
+  Fixups[n].Address:=Addr;
+
+  Fixups[n].line:=currentLine;
+  Fixups[n].token:=token;
 end;
 
-procedure TAssembler.SetORG(L: TMemoryAddress);
+procedure TAssembler.SetORG(address: TMemoryAddress);
 begin
-     CurrentORG := L;
+     CurrentORG := address;
 end;
 
 procedure TAssembler.AddWord(W: Word);
 begin
-  while Length(FOpCodes) < CurrentORG+1 do begin
-    SetLength(FOpCodes, Length(FOpCodes) + 1);
-  end;
+   if length(FOpCodes) < CurrentORG+1 then begin
+     SetLength(FOpCodes, CurrentORG+1);
+   end;
 
-  OpCodes[CurrentORG]:=W;
-  CurrentORG:=CurrentORG+1;
+   OpCodes[CurrentORG]:=W;
+   CurrentORG:=CurrentORG+1;
 end;
 
 function TAssembler.GetOpCodes(AIndex: TMemoryAddress): Word;
@@ -140,11 +153,11 @@ var
 begin
   token := next();
   if token.length = 1 then begin
-    addError('Invalid label format', token);
+    addError('invalid label format', token);
     exit;
   end;
   name := rightstr(token.strVal, token.length-1);
-  AddSymbol(name, CurrentORG, currentLine.sourcePos+token.linePos);
+  AddSymbol(name, CurrentORG, token);
   DataSymbol:=True;
 end;
 
@@ -166,17 +179,17 @@ begin
   while hasNext() do begin
       token := next();
       if not (token.tokenType in [ttNumber, ttSymbol, ttString]) then begin
-         addError('Invalid token in DAT: '+token.strVal);
+         addError('expecting number, symbol or string, got: '+token.strVal);
          break;
       end;
 
       case token.tokenType of
         ttNumber: addWord(token.intVal and $FFFF);
         ttSymbol: if isCPURegisterName(token.strVal) then begin
-                     addError('Cannot use a register in DATA', token);
+                     addError('cannot use a register in DATA', token);
                      exit;
                   end else begin
-                     AddFixup(token.strVal, currentLine.sourcePos+token.linePos, CurrentORG);
+                     AddFixup(token.strVal, CurrentORG, token);
                      AddWord(0);
                   end;
         ttString: for ch in token.strVal do begin
@@ -200,16 +213,16 @@ var
   token: TToken;
 begin
   if not hasNext() then begin
-    addError('Unexpected end of code in RESERVE');
+    addError('expected 1 argument for RESERVE');
     Exit;
   end;
   if has(2) then begin
-    addError('Too many arguments for RESERVE', peek(1));
+    addError('expected 1 argument for RESERVE', peek(1));
     Exit;
   end;
   token := next();
   if token.tokenType <> ttNumber then begin
-    addError('Number expected in RESERVE', token);
+    addError('number expected in RESERVE', token);
     exit;
   end;
 
@@ -226,16 +239,16 @@ var
   token: TToken;
 begin
   if not hasNext() then begin
-    addError('Unexpected end of code in ORG');
+    addError('expected 1 argument for ORG');
     Exit;
   end;
   if has(2) then begin
-    addError('Too many arguments for ORG', peek(1));
+    addError('expected 1 argument for ORG', peek(1));
     Exit;
   end;
   token := next();
   if token.tokenType <> ttNumber then begin
-    addError('Number expected in ORG', token);
+    addError('number expected in ORG', token);
     exit;
   end;
   CurrentORG := token.intVal;
@@ -260,38 +273,34 @@ var
       hasOffset: boolean;
     begin
       if not hasNext() then begin
-        addError('Unexpected end of code while parsing parameter for ' + CPUInstructionNames[AInstr]);
+        addError('missing arguments for: ' + CPUInstructionNames[AInstr]);
         Exit(0);
       end;
       hasOffset:=false;
       if isOpenBracket() then begin //[reg+offset], [offset+reg], [next word] and [register]
         next(); //skip over open bracket
-        if not has(2) then begin
-          addError('Unexpected end of code inside memory access parameter for ' + CPUInstructionNames[AInstr]);
+        if not hasNext() then begin
+          addError('expected number, symbol or register');
           Exit(0);
         end;
         token1 := next(); //first register or offset/symbol
         if not (token1.tokenType in [ttNumber, ttSymbol]) then begin
-           addError('Unexpected token type inside memory access parameter for ' + CPUInstructionNames[AInstr]);
+           addError('expected number, symbol or register, got: ' + token1.strVal);
            Exit(0);
         end;
 
         if (peek().tokenType = ttDelimiter) and (peek().strVal = '+') then begin
           hasOffset:=true;
           next(); //skip over the +
-          if not has(2) then begin
-             addError('Unexpected end of code inside memory access parameter for ' + CPUInstructionNames[AInstr]);
-             Exit(0);
-          end;
           token2 := next();  //second register or offset/symbol
           if not (token2.tokenType in [ttNumber, ttSymbol]) then begin
-             addError('Unexpected token type inside memory access parameter for ' + CPUInstructionNames[AInstr]);
+             addError('expected number, symbol or register, got: ' + token2.strVal);
              Exit(0);
           end;
         end;
 
-        if not isCloseBracket() then begin
-            addError('Closing bracket ] or ) expected after memory address in ' + CPUInstructionNames[AInstr]);
+        if (not hasNext()) or (not isCloseBracket()) then begin
+            addError('expected ] or )');
             exit(0);
         end;
         next(); //skip over close bracket
@@ -299,20 +308,20 @@ var
         if hasOffset then begin //[offset+reg] or [reg+offset]
            if (token1.tokenType = ttSymbol) and (isCPURegisterName(token1.strVal)) then begin
               if (token2.tokenType = ttSymbol) and (isCPURegisterName(token1.strVal)) then begin
-                 addError('Allowed format: [reg + offset] or [offset + reg] ' + CPUInstructionNames[AInstr]);
+                 addError('invalid arg format, expected: [reg + offset] or [offset + reg]');
                  exit(0);
               end;
               reg := getCPURegisterID(token1.strVal);
               token1 := token2;
            end else begin //token1 is not a register, token2 must be
                if (token2.tokenType <> ttSymbol) or (not isCPURegisterName(token2.strVal)) then begin
-                  addError('Allowed format: [reg + offset] or [offset + reg] ' + CPUInstructionNames[AInstr]);
+                  addError('invalid arg format, expected: [reg + offset] or [offset + reg]');
                   exit(0);
                end;
               reg := getCPURegisterID(token2.strVal);
            end;
            if token1.tokenType = ttSymbol then begin
-              AddFixup(token1.strVal, currentLine.sourcePos+token1.linePos, CurrentORG);
+              AddFixup(token1.strVal, CurrentORG, token1);
               AddWord(0);
            end else begin;
               AddWord(token1.intVal);
@@ -328,7 +337,7 @@ var
           exit($08 + ord(getCPURegisterID(token1.strVal)));
         end;
         //[symbol]
-        AddFixup(token1.strVal, currentLine.sourcePos+token1.linePos, CurrentORG);
+        AddFixup(token1.strVal, CurrentORG, token1);
         AddWord(0);
         exit($1E);
       end //END: if isOpenBracket()
@@ -354,7 +363,7 @@ var
         end;
 
         //a symbol
-        AddFixup(token1.strVal, currentLine.sourcePos+token1.linePos, CurrentORG);
+        AddFixup(token1.strVal, CurrentORG, token1);
         AddWord(0);
         Exit($1F);
       end;
@@ -366,14 +375,14 @@ var
     for I:=0 to CPUInstructionArguments[AInstr] - 1 do begin
       if lineError then Break;
       if not hasNext() then begin
-        addError('Unexpected end of code while parsing the arguments for instruction ' + CPUInstructionNames[AInstr]);
+        addError('argument expected');
         Exit;
       end;
       if (I > 0) then begin
         if hasNext() and (peek().tokenType=ttDelimiter) and (peek().strVal=',') then begin
           next() //skip over comma
         end else begin
-          addError('Comma expected after instruction parameter for ' + CPUInstructionNames[AInstr]);
+          addError('comma expected, got: ' + peek().strVal);
           exit;
         end;
       end;
@@ -389,7 +398,7 @@ var
 begin
   InstrToken := next();
   if InstrToken.tokenType <> ttSymbol then begin
-    addError('Syntax error - an instruction was expected here');
+    addError('expected instruction, got: '+InstrToken.strVal);
     Exit;
   end;
   for Instr:=Low(TCPUInstruction) to High(TCPUInstruction) do begin
@@ -399,7 +408,7 @@ begin
       Exit;
     end;
   end;
-  addError('Unknown instruction: ' + InstrToken.strVal);
+  addError('unknown instruction: ' + InstrToken.strVal);
 end;
 
 procedure TAssembler.parseLine();
@@ -418,10 +427,10 @@ begin
         end;
         AssembleInstruction();
         if hasNext() then begin
-           addError('Junk after instruction');
+           addError('junk after instruction');
         end;
      end else begin
-         addError('Invalid token: ' + head.strVal);
+         addError('expected label, directive or instruction, got: ' + head.strVal);
      end;
 end;
 
@@ -454,7 +463,7 @@ begin
            end;
        end;
        if not found then begin
-          addError('Undefined symbol: '+Fixups[i].Name);
+          addError('undefined symbol: '+Fixups[i].Name, Fixups[i].line);
        end;
      end;
   end;
@@ -465,30 +474,43 @@ var
   s: string;
 begin
   s := peek().strVal;
-  exit(    (s ='DW') or (s = 'DAT') or (s = 'DATA')
-        or (s = 'RESW') or (s = 'RESERVE')
-        or (s = 'ORG')
-        );
+  exit(isDData(s) or isDReserve(s) or isDORG(s));
 end;
+
+function TAssembler.isDData(str: string):boolean
+begin
+  exit( (s='DW') or (s='DAT') or (s='DATA'));
+end;
+
+function TAssembler.isDReserve(str: string):boolean
+begin
+  exit( (s='RESW') or (s='RESERVE'));
+end;
+
+function TAssembler.isDORG(str: string):boolean
+begin
+  exit( (s='ORG'));
+end;
+
 
 procedure TAssembler.parseDirective();
 var
   str: string;
 begin
      str := next().strVal;
-     if (str = 'DW') or (str = 'DAT') or (str = 'DATA') then begin
+     if (isDData(str)) then begin
        AssembleData();
        exit;
      end;
-     if (str = 'RESW') or (str = 'RESERVE') then begin
+     if (isDReserve(str)) then begin
        AssembleReserve();
        exit;
      end;
-     if (str = 'ORG') then begin
+     if (isDReserve(str)) then begin
        AssembleORG;
        exit();
      end;
-     addError('Implementation error in parseDirective');
+     addError('implementation error in parseDirective');
 end;
 
 function TAssembler.isOpenBracket(): Boolean;
@@ -559,13 +581,21 @@ begin
      errors[n].message := message;
      errors[n].line := currentLine;
 
-     errors[n].token.length:=0;
-     errors[n].token.intVal:=0;
-     errors[n].token.linePos:=0;
-     errors[n].token.strVal:='NO TOKEN';
-     errors[n].token.tokenType:=ttString;
+     errors[n].token := defaultDefineValue;
      lineError:=true;
      skipLine();
+end;
+
+procedure TAssembler.addError(message: string; line: TTokenizedLine);
+var
+  n:integer;
+begin
+     n := length(errors);
+     SetLength(errors, n + 1);
+     errors[n].message := message;
+     errors[n].line := line;
+
+     errors[n].token := defaultDefineValue;
 end;
 
 end.

@@ -7,27 +7,19 @@ interface
 uses
   Classes, SysUtils, DTokenizer, DCPUtypes;
 type
-  TPreprocessorError = record
-    message: string;
-    line: integer;
-    sourceFile: string;
-  end;
-  TPreprocessorErrors = array of TPreprocessorError;
-
   TPPDefine = record
     name: string;
     value: TToken;
-
     src: TTokenizedLine;
   end;
   TPPDefines = array of TPPDefine;
-
   { CPreprocessor }
   CPreprocessor = class
     public
       preprocessed: TTokenizedLines;
-      errors: TPreprocessorErrors;
-      warnings: TPreprocessorErrors;
+      errors: TSimpleErrors;
+      warnings: TSimpleErrors;
+
       procedure preprocess(lines: TTokenizedLines);
     private
       work: TTokenizedLines;
@@ -60,13 +52,7 @@ var
   directive: string;
   I: integer;
   found: Boolean;
-  defaultValue: TToken;
 begin
-  defaultValue.intVal := 1;
-  defaultValue.length := 0;
-  defaultValue.linePos:= 0;
-  defaultValue.strVal := '1';
-  defaultValue.tokenType:=ttSymbol;
 
   preprocessed:=lines;
   SetLength(ifstack, Length(ifstack)+1);
@@ -120,7 +106,7 @@ begin
               if i = 3 then begin
                  addDefine(tline.tokens[1].strVal, tline.tokens[2], tline);
               end else begin
-                 addDefine(tline.tokens[1].strVal, defaultValue, tline);
+                 addDefine(tline.tokens[1].strVal, defaultDefineValue, tline);
               end;
               Continue;
            end;
@@ -154,9 +140,9 @@ var
    tokenizer: CTokenizer;
    preprocessor: CPreprocessor;
    newtLine: TTokenizedLine;
-   tError: TTokenizerError;
-   nError: TPreprocessorError;
-   nWarning: TPreprocessorError;
+   tError: TSimpleError;
+   nError: TSimpleError;
+   nWarning: TSimpleError;
 begin
   if length(tline.tokens) <> 2 then begin
      addError(tline.sourceFile, tline.lineNumber, 'Invalid #include format (#include "filename")');

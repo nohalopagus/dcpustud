@@ -1,37 +1,13 @@
 unit DTokenizer;
 
 {$mode objfpc}{$H+}
+
 interface
 
 uses
   Classes, SysUtils, DCPUtypes;
 
 type
-
-  TToken = record
-    tokenType: TTokenType;
-    intVal: integer;
-    strVal: string;
-    length: integer;
-    linePos: integer; //offset into line where the token starts
-  end;
-  TTokens = array of TToken;
-
-  TTokenizedLine = record
-    tokens: TTokens;
-    lineNumber: integer;
-    sourceFile: string;
-    sourcePos: integer; //offset into source file where line starts
-  end;
-  TTokenizedLines = array of TTokenizedLine;
-
-  TTokenizerError = record
-    message: string;
-    line: integer;
-    sourceFile: string;
-  end;
-
-
   {
    CTokenizer - turns a source file into a list
               of tokenized lines
@@ -50,7 +26,7 @@ type
 
   public
     tokenized: TTokenizedLines;
-    errors: array of TTokenizerError;
+    errors: TSimpleErrors;
     upcaseSymbols: boolean;
     procedure tokenize(ASource: string; AFile: string);
 
@@ -166,18 +142,14 @@ begin
 end;
 
 function CTokenizer.parseSymbol(): string;
-var
-   start: integer;
-   symbol: string;
 begin
-     start := linePosition;
-     while hasNext() and not isTokenDelimiter() do next();
-     symbol := copy(currentLine, start, linePosition-start);
+     result := '';
+     while hasNext() and not isTokenDelimiter() do result += next();
 
      if upcaseSymbols then begin
-        exit(upcase(symbol));
+        exit(upcase(result));
      end else begin
-        exit(symbol);
+        exit(result);
      end;
 end;
 
@@ -285,7 +257,7 @@ begin
         end else if (srcPeek() = #10) then
             srcNext();
      end;
-     currentLine := trim(line);
+     currentLine := line;
      lineLength:= length(currentLine);
      linePosition:=1;
      exit(True);
@@ -293,16 +265,15 @@ end;
 
 function CTokenizer.isNumeric(): boolean;
 var
-      check: char;
+     check: char;
 begin
      check := peek();
      if (check = '-') then begin
-        if not hasNext() then
+        if not has(2) then
            exit(False)
         else
            check := peek(1);
      end;
-     if (check = '-') then check := peek(1);
      if check in ['0' .. '9'] then exit(True);
      Exit(False);
 end;
@@ -312,14 +283,13 @@ begin
      result := '';
      if not (peek() = '"') then begin
         addError('Implementation error while parsing string.');
-        skipLine();
         exit(result);
      end;
      next();
 
      while True do begin
            if not hasNext() then begin
-               addError('Invalid string format');
+               addError('unexpected and of string');
                exit(result);
            end;
            if peek() = '"' then begin //end of string
@@ -327,8 +297,7 @@ begin
               break;
            end;
            if (peek() = '\') and not has(2) then begin
-              addError('Unexpected end of string');
-              skipLine();
+              addError('unexpected end of string in escape sequence');
               break;
            end;
            if peek() = '\' then begin
@@ -364,7 +333,7 @@ end;
 //reads the next number from the current line
 function CTokenizer.parseNumber(): integer;
 var
-      negate: integer;
+      signum: integer;
       base: integer;
       aDigit: integer;
       tokenStart: integer;
@@ -372,26 +341,24 @@ begin
      tokenStart := linePosition; //in case of error
      base := 10; //default, if no format specifier
 
-     negate := 1;
+     signum := 1;
      if peek() = '-' then begin
-        negate := -1;
+        signum := -1;
         next();
      end;
      if (peek() = '0') and has(3) and (lowercase(peek(1)) in ['b', 'o', 'x']) then begin
-        case lowercase(peek(1)) of
+        next(); //skip over leading 0
+        case lowercase(next()) of
              'b': base := 2;
              'o': base := 8;
              'x': base := 16;
         end;
-        //skip over format specifier
-        next();
-        next();
      end;
 
      result := 0;
      while hasNext() and (not isTokenDelimiter()) do begin
             result *= base;
-            aDigit := ord(lowercase(peek()));
+            aDigit := ord(lowercase(next()));
             if aDigit <= ord('9') then begin
                aDigit -= ord('0')
             end else begin
@@ -400,13 +367,12 @@ begin
             end;
             if (aDigit<0) or (aDigit>base-1) then begin
                linePosition:=tokenStart;
-               addError('Invalid number format: '+parseSymbol());
+               addError('invalid number format: '+parseSymbol());
                exit(0);
             end;
             result+=aDigit;
-            next();
      end;
-     exit(negate * result);
+     exit(signum * result);
 end;
 
 procedure CTokenizer.addError(message: string);
@@ -415,6 +381,7 @@ begin
      errors[High(errors)].message:=message;
      errors[High(errors)].line:=currentLineNr;
      errors[High(errors)].sourceFile:=sourceFile;
+     skipLine();
 end;
 end.
 
