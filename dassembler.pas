@@ -356,7 +356,7 @@ var
         if token1.strVal = 'PUSH' then Exit($1A);
         if token1.strVal = 'SP' then Exit($1B);
         if token1.strVal = 'PC' then Exit($1C);
-        if token1.strVal = 'O' then Exit($1D);
+        if token1.strVal = 'EX' then Exit($1D);
 
         if isCPURegisterName(token1.strVal) then begin
            Exit(Ord(getCPURegisterID(token1.strVal)));

@@ -416,7 +416,7 @@ var
       $1A: Result:='PUSH';
       $1B: Result:='SP';
       $1C: Result:='PC';
-      $1D: Result:='O';
+      $1D: Result:='EX';
       $1E: Result:='[0x' + HexStr(GetNextWord, 4) + ']';
       $1F: Result:='0x' + HexStr(GetNextWord, 4);
       else raise EDCPU16Exception.Create('Implementation error - the value ' + IntToStr(AValue) + ' cannot be decoded');
