@@ -379,7 +379,7 @@ var
         Exit;
       end;
       if (I > 0) then begin
-        if hasNext() and (peek().tokenType=ttDelimiter) and (peek().strVal=',') then begin
+        if (peek().tokenType=ttDelimiter) and (peek().strVal=',') then begin
           next() //skip over comma
         end else begin
           addError('comma expected, got: ' + peek().strVal);
@@ -389,9 +389,9 @@ var
       Args[I]:=AssembleArgument();
     end;
     if Ord(AInstr) < Ord(ciReserved) then begin
-      OpCodes[IAddr] := Ord(AInstr) or (Args[0] shl 4) or (Args[1] shl 10);
+      OpCodes[IAddr] := Ord(AInstr) or (Args[0] shl BaseInstrBits) or (Args[1] shl 10);
     end else begin
-      OpCodes[IAddr]:=((Ord(AInstr) - Ord(ciReserved)) shl 4) or (Args[0] shl 10);
+      OpCodes[IAddr]:=((Ord(AInstr) - Ord(ciReserved)) shl BaseInstrBits) or (Args[0] shl 10);
     end;
   end;
 

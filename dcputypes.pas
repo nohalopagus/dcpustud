@@ -59,7 +59,7 @@ const
   CPUInstructionArguments: array [TCPUInstruction] of Integer = (0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 1, 0);
 
   defaultDefineValue: TToken = (tokenType:ttSymbol; intVal: 0; strVal:'0'; length: 0; linePos:0 );
-
+  BaseInstrBits: integer = 5;
 
 function isCPURegisterName(symbol: string): boolean;
 function getCPURegisterID(symbol: string): TCPURegister;

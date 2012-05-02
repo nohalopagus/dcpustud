@@ -196,7 +196,7 @@ begin
   OpCode:=FetchNextWord;
   Instruction:=TCPUInstruction(OpCode and $0F);
   if Instruction=ciExtendedPrefix then begin
-    Instruction:=TCPUInstruction(((opCode and $3F0) shr 4) + Ord(ciReserved));
+    Instruction:=TCPUInstruction(((opCode and $3F0) shr BaseInstrBits) + Ord(ciReserved));
     if Instruction in Mutators then begin
       Destination:=DecodeResourceValue(OpCode shr 10);
       ValueA:=ResourceMemory[Destination];
@@ -208,12 +208,12 @@ begin
     end;
   end else begin
     if Instruction in Mutators then begin
-      Destination:=DecodeResourceDestination((OpCode shr 4) and $3F);
+      Destination:=DecodeResourceDestination((OpCode shr BaseInstrBits) and $3F);
       ValueA:=ResourceMemory[Destination];
       ValueB:=DecodeResourceValue(OpCode shr 10);
     end else begin
       Destination:=InvalidDestination;
-      ValueA:=DecodeResourceValue((OpCode shr 4) and $3F);
+      ValueA:=DecodeResourceValue((OpCode shr BaseInstrBits) and $3F);
       ValueB:=DecodeResourceValue(OpCode shr 10);
     end;
   end;
@@ -425,16 +425,16 @@ var
 
 begin
   OpCode:=GetNextWord;
-  Instruction:=TCPUInstruction(OpCode and $0F);
+  Instruction:=TCPUInstruction(OpCode and $1F);
   if Instruction=ciExtendedPrefix then begin
-    Instruction:=TCPUInstruction(((opCode and $3F0) shr 4) + Ord(ciReserved));
+    Instruction:=TCPUInstruction(((opCode and $3e0) shr BaseInstrBits) + Ord(ciReserved));
     if Instruction in [Low(TCPUInstruction)..High(TCPUInstruction)] then
       Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter(OpCode shr 10)
     else
       Result:='; Invalid opcode - ' + HexStr(OpCode, 4);
   end else begin
     if Instruction in [Low(TCPUInstruction)..High(TCPUInstruction)] then
-      Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter((OpCode shr 4) and $3F) + ', ' + DecodeParameter(OpCode shr 10)
+      Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter((OpCode shr BaseInstrBits) and $1F) + ', ' + DecodeParameter(OpCode shr 10)
     else
       Result:='; Invalid opcode - ' + HexStr(OpCode, 4);
   end;
