@@ -59,7 +59,28 @@ type
   end;
 
 const
-  CPUInstructionCycles: array [TCPUInstruction] of Integer = (0, 1, 2, 2, 2, 3, 3, 2, 2, 1, 1, 1, 2, 2, 2, 2, 0, 2, 0);
+  CPUInstructionCycles: array [TCPUInstruction] of Integer = (
+                        0,
+                        1,
+                        2, 2, 2, 2,
+                        3, 3, 3, 3,
+                        1, 1, 1, 1, 1, 1,
+                        2, 2, 2, 2, 2, 2, 2, 2,
+                        0, 0,
+                        3, 3,
+                        0, 0,
+                        2, 2,
+                        0,
+                        3,
+                        0, 0, 0, 0, 0, 0,
+                        4, 1, 1, 3, 2,
+                        0, 0, 0,
+                        2, 4, 4,
+                        0, 0, 0, 0,
+                        0, 0, 0, 0,
+                        0, 0, 0, 0,
+                        0,
+                        0);
   Mutators = [ciSET, ciADD, ciSUB, ciMUL, ciDIV, ciMOD, ciSHL, ciSHR, ciAND, ciBOR, ciXOR];
   InvalidDestination = High(TResourceAddress);
   SymbolCharacter = ['A'..'Z', 'a'..'z', '0'..'9', '_'];
@@ -195,7 +216,7 @@ begin
   OpCode:=FetchNextWord;
   Instruction:=TCPUInstruction(OpCode and BaseInstrMask);
   if Instruction=ciExtendedPrefix then begin
-    Instruction:=TCPUInstruction(((opCode and $3e0) shr BaseInstrBits) + Ord(ciReserved));
+    Instruction:=TCPUInstruction(((opCode and $3e0) shr BaseInstrBits) + Ord(ciReservedEX));
     if Instruction in Mutators then begin
       Destination:=DecodeResourceValue(operandA(OpCode));
       ValueA:=ResourceMemory[Destination];
@@ -296,7 +317,7 @@ begin
       end;
       if FSkipInstruction then Inc(BurnCycles);
     end;
-    ciReserved: raise EDCPU16Exception.Create('Implementation error - unexpected reserved extended opcode at ' + HexStr(CPURegister[crPC] - 1, 4));
+    ciReservedEX: raise EDCPU16Exception.Create('Implementation error - unexpected reserved extended opcode at ' + HexStr(CPURegister[crPC] - 1, 4));
     ciJSR: begin
       if CPURegister[crSP]=$0 then
         CPURegister[crSP]:=$FFFF
@@ -431,7 +452,7 @@ begin
   OpCode:=GetNextWord;
   Instruction:=TCPUInstruction(OpCode and BaseInstrMask);
   if Instruction=ciExtendedPrefix then begin
-    Instruction:=TCPUInstruction(((opCode and $3e0) shr BaseInstrBits) + Ord(ciReserved));
+    Instruction:=TCPUInstruction(((opCode and $3e0) shr BaseInstrBits) + Ord(ciReservedEX));
     if Instruction in [Low(TCPUInstruction)..High(TCPUInstruction)] then
       Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter(operandA(OpCode))
     else

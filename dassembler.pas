@@ -372,7 +372,7 @@ var
   begin
     IAddr:=CurrentORG;
     AddWord(0); //instruction will go here
-    for I:=0 to CPUInstructionArguments[AInstr] - 1 do begin
+    for I:=0 to instructionArgCount(AInstr) - 1 do begin
       if lineError then Break;
       if not hasNext() then begin
         addError('argument expected');
@@ -388,10 +388,10 @@ var
       end;
       Args[I]:=AssembleArgument();
     end;
-    if Ord(AInstr) < Ord(ciReserved) then begin
+    if Ord(AInstr) < Ord(ciReservedEX) then begin
       OpCodes[IAddr] := (Args[1] shl 10) or (Args[0] shl BaseInstrBits) or Ord(AInstr);
     end else begin
-      OpCodes[IAddr] := (Args[0] shl 10) or ((Ord(AInstr) - Ord(ciReserved)) shl BaseInstrBits);
+      OpCodes[IAddr] := (Args[0] shl 10) or ((Ord(AInstr) - Ord(ciReservedEX)) shl BaseInstrBits);
     end;
   end;
 

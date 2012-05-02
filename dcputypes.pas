@@ -6,7 +6,6 @@ interface
 type
     TOpArgumentType = (arRegister, arRegisterRefNW, arOffset, arPOP, arPEEK, arPUSH, arSP, arPC, arO, arReferenceNW, arLiteralNW, arSmallLiteral, arReference);
     TCPURegister = (crA, crB, crC, crX, crY, crZ, crI, crJ, crPC, crSP, crEX);
-    TCPUInstruction = (ciExtendedPrefix, ciSET, ciADD, ciSUB, ciMUL, ciDIV, ciMOD, ciSHL, ciSHR, ciAND, ciBOR, ciXOR, ciIFE, ciIFN, ciIFG, ciIFB, ciReserved, ciJSR, ciInvalid);
     TTokenType = (ttSymbol, ttNumber, ttString, ttDelimiter);
 
     TMemoryAddress = $0..$FFFF;
@@ -51,12 +50,68 @@ type
        sourceFile: string;
      end;
      TSimpleErrors = array of TSimpleError;
-
+     TCPUInstruction = (
+                     ciExtendedPrefix,
+                     ciSET,
+                     ciADD, ciSUB,
+                     ciMUL, ciMLI,
+                     ciDIV, ciDVI,
+                     ciMOD, ciMDI,
+                     ciAND, ciBOR, ciXOR,
+                     ciSHR, ciASR, ciSHL,
+                     ciIFB, ciIFC,
+                     ciIFE, ciIFN,
+                     ciIFG, ciIFA,
+                     ciIFL, ciIFU,
+                     ciR18, ciR19, //reserved
+                     ciADX, ciSBX,
+                     ciR1c, ciR1d, //reserved
+                     ciSTI, ciSTD,
+                     ciReservedEX,
+                     ciJSR,
+                     ciRE2, ciRE3, ciRE4, //reserved
+                     ciRE5, ciRE6, ciRE7, //reserved
+                     ciINT, ciIAG, ciIAS, ciRFI, ciIAQ,
+                     ciREd, ciREe, ciREf, //reserved
+                     ciHWN, ciHWQ, ciHWI,
+                     ciRE13, ciRE14, ciRE15, ciRE16, //reserved
+                     ciRE17, ciRE18, ciRE19, ciRE1a, //reserved
+                     ciRE1b, ciRE1c, ciRE1d, ciRE1e, //reserved
+                     ciRE1f, //reserved
+                     ciInvalid);
 const
+   CPUInstructionNames: array [TCPUInstruction] of string = (
+                     'Extended Prefix',
+                     'SET',
+                     'ADD', 'SUB',
+                     'MUL', 'MLI',
+                     'DIV', 'DVI',
+                     'MOD', 'MDI',
+                     'AND', 'BOR', 'XOR',
+                     'SHR', 'ASR', 'SHL',
+                     'IFB', 'IFC',
+                     'IFE', 'IFN',
+                     'IFG', 'IFA',
+                     'IFL', 'IFU',
+                     'Reserved ', 'Reserved ',
+                     'ADX', 'SBX',
+                     'Reserved ', 'Reserved ',
+                     'STI', 'STD',
+                     'Reserved ',
+                     'JSR',
+                     'Reserved ', 'Reserved ', 'Reserved ',
+                     'Reserved ', 'Reserved ', 'Reserved ',
+                     'INT', 'IAG', 'IAS', 'RFI', 'IAQ',
+                     'Reserved ', 'Reserved ', 'Reserved ',
+                     'HWN', 'HWQ', 'HWI',
+                     'Reserved ', 'Reserved ', 'Reserved ', 'Reserved ',
+                     'Reserved ', 'Reserved ', 'Reserved ', 'Reserved ',
+                     'Reserved ', 'Reserved ', 'Reserved ', 'Reserved ',
+                     'Reserved ',
+                     'ERROR - Invalid');
+
+
   CPURegisterNames: array [TCPURegister] of string = ('A', 'B', 'C', 'X', 'Y', 'Z', 'I', 'J', 'PC', 'SP', 'EX');
-  CPUInstructionNames: array [TCPUInstruction] of string = ('Extended Prefix', 'SET', 'ADD', 'SUB', 'MUL', 'DIV',
-                       'MOD', 'SHL', 'SHR', 'AND', 'BOR', 'XOR', 'IFE', 'IFN', 'IFG', 'IFB', 'Reserved ', 'JSR', 'ERROR - Invalid');
-  CPUInstructionArguments: array [TCPUInstruction] of Integer = (0, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 0, 1, 0);
 
   defaultDefineValue: TToken = (tokenType:ttSymbol; intVal: 0; strVal:'0'; length: 0; linePos:0 );
   BaseInstrBits: integer = 5;
@@ -68,8 +123,15 @@ function isDirective(str: string): boolean;
 function isDData(str: string):boolean;
 function isDReserve(str: string):boolean;
 function isDORG(str: string):boolean;
+function instructionArgCount(insn: TCPUInstruction): integer; inline;
 
 implementation
+
+function instructionArgCount(insn: TCPUInstruction): integer; inline;
+begin
+  if insn<ciReservedEX then exit(2);
+  exit(1);
+end;
 
 function isCPURegisterName(symbol: string): boolean; inline;
 var
