@@ -21,6 +21,7 @@ type
       warnings: TSimpleErrors;
 
       procedure preprocess(lines: TTokenizedLines; incPath: string);
+      function hasErrors(): boolean;
     private
       work: TTokenizedLines;
       defines: TPPDefines;
@@ -52,7 +53,6 @@ var
   tline: TTokenizedLine;
   directive: string;
   I: integer;
-  found: Boolean;
 begin
   includePath:=incPath;
   preprocessed:=lines;
@@ -144,10 +144,7 @@ var
    tokenizer: CTokenizer;
    preprocessor: CPreprocessor;
    newtLine: TTokenizedLine;
-   tError: TSimpleError;
-   nError: TSimpleError;
-   nWarning: TSimpleError;
-   nDefine: TPPDefine;
+   message: TSimpleError;
 begin
   if length(tline.tokens) <> 2 then begin
      addError(tline.sourceFile, tline.lineNumber, 'invalid #include format (#include "filename")');
@@ -168,19 +165,19 @@ begin
   tokenizer := CTokenizer.Create();
   preprocessor := CPreprocessor.Create();
   tokenizer.tokenize(included.Text, tline.tokens[1].strVal);
-  if length(tokenizer.errors) > 0 then begin
+  if tokenizer.hasErrors() then begin
      addError(tline.sourceFile, tline.lineNumber, 'errors in included file'+inttostr(high(tokenizer.errors)));
-     for tError in tokenizer.errors do
-         addError(tError.sourceFile, tError.line, tError.message);
+     for message in tokenizer.errors do
+         addError(message.sourceFile, message.line, message.message);
   end else begin
       preprocessor := CPreprocessor.Create();
       preprocessor.preprocess(tokenizer.tokenized, includePath, defines);
-      if length(preprocessor.errors) > 0 then begin
-         for nError in preprocessor.errors do
-            addError(nError.sourceFile, nError.line, nError.message);
+      if preprocessor.hasErrors() then begin
+         for message in preprocessor.errors do
+            addError(message.sourceFile, message.line, message.message);
       end else begin
-          for nWarning in preprocessor.warnings do
-             addWarning(nWarning.sourceFile, nWarning.line, nWarning.message);
+          for message in preprocessor.warnings do
+             addWarning(message.sourceFile, message.line, message.message);
           defines := preprocessor.defines;
           for newtline in preprocessor.preprocessed do
              addIncludedLine(newtline);
@@ -267,7 +264,6 @@ var
    n: integer;
    i: integer;
 begin
-     addWarning('a', 0, 'AL: '+tline.tokens[0].strVal);
      n := Length(work);
      SetLength(work, n+1);
      work[n] := tline;
@@ -287,6 +283,11 @@ begin
      errors[n].message:=message;
      errors[n].line:=line;
      errors[n].sourceFile:=filename;
+end;
+
+function CPreprocessor.hasErrors(): boolean;
+begin
+  exit(Length(errors)>0);
 end;
 
 procedure CPreprocessor.addWarning(filename:string; line:integer; message: string);

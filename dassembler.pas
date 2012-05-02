@@ -5,7 +5,7 @@ unit DAssembler;
 interface
 
 uses
-  Classes, SysUtils, DCPUtypes, DTokenizer;
+  Classes, SysUtils, DCPUtypes;
 
 type
   charset = set of char;

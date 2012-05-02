@@ -5,7 +5,7 @@ unit DCPU16;
 interface
 
 uses
-  Classes, SysUtils, DTokenizer, DCPUtypes;
+  Classes, SysUtils, DCPUtypes;
 
 type
   EDCPU16Exception = class(Exception);

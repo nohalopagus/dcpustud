@@ -29,6 +29,7 @@ type
     errors: TSimpleErrors;
     upcaseSymbols: boolean;
     procedure tokenize(ASource: string; AFile: string);
+    function hasErrors(): boolean;
 
   private
     function parseLine(): TTokenizedLine;
@@ -385,5 +386,10 @@ begin
    errors[n].sourceFile:=sourceFile;
    skipLine();
 end;
+function CTokenizer.hasErrors(): boolean;
+begin
+  exit(length(errors)>0);
+end;
+
 end.
 

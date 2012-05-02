@@ -463,7 +463,6 @@ begin
   CPU.UseBigEndianWords:=mCPUUseBigEndianWords.Checked;
 end;
 
-
 procedure TMain.mFileNewClick(Sender: TObject);
 begin
   if ConfirmOk then begin
@@ -713,7 +712,6 @@ var
   MemDump: string;
   tokenizer: CTokenizer;
   preprocessor: CPreprocessor;
-  tmp: string;
   aError: TAssemblerError;
   sError: TSimpleError;
   currentFile: string;
