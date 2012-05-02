@@ -8,6 +8,7 @@ uses
   Classes, SysUtils, DCPUtypes, DTokenizer;
 
 type
+  charset = set of char;
   TAssemblerError = record
     message: string;
     line: TTokenizedLine;
@@ -35,15 +36,14 @@ type
     function has(count: integer): boolean;
     function next(): TToken;
     procedure skipLine();
+    function restStr(): string;
 
     procedure parseLine();
 
+    function isDelimiter(delim: charset): Boolean;
     function isOpenBracket(): Boolean;
     function isCloseBracket(): Boolean;
-    function isDirective(): boolean;
-    function isDData(str: string):boolean;
-    function isDReserve(str: string):boolean;
-    function isDORG(str: string):boolean;
+
 
     procedure parseDirective();
 
@@ -421,13 +421,13 @@ begin
            AssembleLabel();
            exit;
         end;
-        if isDirective() then begin
+        if isDirective(head.strVal) then begin
            parseDirective();
            exit;
         end;
         AssembleInstruction();
         if hasNext() then begin
-           addError('junk after instruction');
+           addError('junk after instruction: '+restStr());
         end;
      end else begin
          addError('expected label, directive or instruction, got: ' + head.strVal);
@@ -469,30 +469,6 @@ begin
   end;
 end;
 
-function TAssembler.isDirective(): boolean;
-var
-  s: string;
-begin
-  s := peek().strVal;
-  exit(isDData(s) or isDReserve(s) or isDORG(s));
-end;
-
-function TAssembler.isDData(str: string):boolean
-begin
-  exit( (s='DW') or (s='DAT') or (s='DATA'));
-end;
-
-function TAssembler.isDReserve(str: string):boolean
-begin
-  exit( (s='RESW') or (s='RESERVE'));
-end;
-
-function TAssembler.isDORG(str: string):boolean
-begin
-  exit( (s='ORG'));
-end;
-
-
 procedure TAssembler.parseDirective();
 var
   str: string;
@@ -511,6 +487,12 @@ begin
        exit();
      end;
      addError('implementation error in parseDirective');
+end;
+
+function TAssembler.isDelimiter(delim: charset): Boolean;
+begin
+  exit( (peek().tokenType = ttDelimiter)
+        and (peek().strVal[1] in delim));
 end;
 
 function TAssembler.isOpenBracket(): Boolean;
@@ -557,6 +539,14 @@ function TAssembler.next(): TToken;
 begin
      inc(linePosition);
      exit(peek(-1));
+end;
+
+function TAssembler.restStr(): string;
+begin
+  result := '';
+  while hasNext() do begin
+    result += next().strVal+' ';
+  end;
 end;
 
 procedure TAssembler.addError(message: string; token: TToken);
