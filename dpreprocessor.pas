@@ -13,6 +13,8 @@ type
     src: TTokenizedLine;
   end;
   TPPDefines = array of TPPDefine;
+  TIFV = (ifvTrue, ifvFalse, ifvIgnore);
+
   { CPreprocessor }
   CPreprocessor = class
     public
@@ -25,7 +27,7 @@ type
     private
       work: TTokenizedLines;
       defines: TPPDefines;
-      ifstack: array of boolean;
+      ifstack: array of TIFV;
       includePath: string;
       procedure processInclude(tline: TTokenizedLine);
       procedure addLine(tline: TTokenizedLine);
@@ -34,9 +36,9 @@ type
       procedure addError(filename:string; line:integer; message: string);
       procedure addWarning(filename:string; line:integer; message: string);
 
-      procedure pushIF(val: Boolean);
-      function  peekIF(): boolean;
-      function  popIF(): boolean;
+      procedure pushIF(val: TIFV);
+      function  peekIF(): TIFV;
+      function  popIF(): TIFV;
 
       function  isDefined(symbol: string): boolean;
       procedure addDefine(symbol: string; value: TToken; src: TTokenizedLine);
@@ -57,7 +59,7 @@ begin
   includePath:=incPath;
   preprocessed:=lines;
   SetLength(ifstack, Length(ifstack)+1);
-  ifstack[0]:=true;
+  ifstack[0]:=ifvTrue;
   while rerun do begin
     rerun := false;
     for tline in preprocessed do begin
@@ -80,22 +82,47 @@ begin
            { #ifdef, #ifndef }
            if (directive = '#ifdef') or (directive = '#ifndef') then begin
               if (Length(tline.tokens) <> 2) or (tline.tokens[1].tokenType <> ttSymbol) then begin
-                 addError(tline.sourceFile, tline.lineNumber, 'Invalid #ifdef format');
+                 addError(tline.sourceFile, tline.lineNumber, 'Invalid '+directive+' format');
                  exit;
               end;
-              if peekIF() then begin //a previous #if succeded, check this one
+              if peekIF() = ifvTrue then begin //a previous #if succeded, check this one
                  if directive = '#ifdef' then begin
-                    pushIF(isDefined(tline.tokens[1].strVal));
+                    if isDefined(tline.tokens[1].strVal) then begin
+                       pushIF(ifvTrue);
+                    end else begin
+                       pushIF(ifvFalse);
+                    end;
                  end else begin
-                    pushIF(not isDefined(tline.tokens[1].strVal));
+                    if isDefined(tline.tokens[1].strVal) then begin
+                       pushIF(ifvFalse);
+                    end else begin
+                       pushIF(ifvTrue);
+                    end;
                  end;
               end else begin //a previous #if failed, don't eval this
-                 pushIF(false);
+                 pushIF(ifvIgnore);
               end;
               continue;
            end;
 
-           if not peekIF() then Continue;
+           { #else }
+           if directive = '#else' then begin
+              if Length(ifstack) = 1 then begin
+                 addError(tline.sourceFile, tline.lineNumber, 'Unmatched #else');
+                 exit;
+              end;
+              if peekIF() = ifvIgnore then continue;
+              if peekIF() = ifvTrue then begin
+                 popIF();
+                 pushIF(ifvFalse);
+              end else begin
+                 popIF();
+                 pushIF(ifvTrue);
+              end;
+              continue;
+           end;
+
+           if not (peekIF() = ifvTrue) then Continue;
 
            { #define }
            if directive = '#define' then begin
@@ -123,7 +150,7 @@ begin
            exit;
         end;
 
-        if peekIF() then addLine(tline);
+        if (peekIF() = ifvTrue) then addLine(tline);
     end;
     preprocessed:=work;
     SetLength(work, 0);
@@ -188,7 +215,7 @@ begin
   FreeAndNil(included);
 end;
 
-function CPreprocessor.popIF(): boolean;
+function CPreprocessor.popIF(): TIFV;
 begin
   result := ifstack[High(ifstack)];
   SetLength(ifstack, Length(ifstack)-1);
@@ -196,12 +223,12 @@ begin
 end;
 
 
-function CPreprocessor.peekIF(): boolean;
+function CPreprocessor.peekIF(): TIFV;
 begin
   exit(ifstack[High(ifstack)]);
 end;
 
-procedure CPreprocessor.pushIF(val: Boolean);
+procedure CPreprocessor.pushIF(val: TIFV);
 begin
      SetLength(ifstack, Length(ifstack)+1);
      ifstack[High(ifstack)] := val;
