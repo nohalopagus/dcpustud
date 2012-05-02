@@ -63,6 +63,11 @@ const
 
 function isCPURegisterName(symbol: string): boolean;
 function getCPURegisterID(symbol: string): TCPURegister;
+function getCPUOpcode(opName: string): TCPUInstruction;
+function isDirective(str: string): boolean;
+function isDData(str: string):boolean;
+function isDReserve(str: string):boolean;
+function isDORG(str: string):boolean;
 
 implementation
 
@@ -81,6 +86,38 @@ var
 begin
   for reg := crA to crJ do
       if CPURegisterNames[reg] = symbol then exit(reg);
+end;
+
+function getCPUOpcode(opName: string): TCPUInstruction;
+var
+  opID: TCPUInstruction;
+begin
+     for opID:=Low(TCPUInstruction) to High(TCPUInstruction) do begin
+         if CPUInstructionNames[opID]=opName then begin
+            exit(opID);
+         end;
+     end;
+     exit(ciInvalid);
+end;
+
+function isDirective(str: string): boolean;
+begin
+  exit(isDData(str) or isDReserve(str) or isDORG(str));
+end;
+
+function isDData(str: string):boolean;
+begin
+  exit( (str='DW') or (str='DAT') or (str='DATA'));
+end;
+
+function isDReserve(str: string):boolean;
+begin
+  exit( (str='RESW') or (str='RESERVE'));
+end;
+
+function isDORG(str: string):boolean;
+begin
+  exit( (str='ORG'));
 end;
 
 end.
