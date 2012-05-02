@@ -731,7 +731,7 @@ begin
   tokenizer.tokenize(mCode.Text, currentFile);
   if Length(tokenizer.errors)>0 then begin
      for sError in tokenizer.errors do begin
-         WriteMessage(sError.sourceFile+':'+inttostr(sError.line)+': error: '+sError.message);
+         WriteMessage(ExtractFileName(sError.sourceFile)+':'+inttostr(sError.line)+': error: '+sError.message);
      end;
      FreeAndNil(tokenizer);
      MessageDlg('Error in code', 'Error while parsing source, see message window', mtError, [mbOK], 0);
@@ -742,7 +742,7 @@ begin
   preprocessor.preprocess(tokenizer.tokenized, includePath);
   if Length(preprocessor.errors)>0 then begin
      for sError in preprocessor.errors do begin
-         WriteMessage(sError.sourceFile+':'+inttostr(sError.line)+': error: '+sError.message);
+         WriteMessage(ExtractFileName(sError.sourceFile)+':'+inttostr(sError.line)+': error: '+sError.message);
      end;
      FreeAndNil(tokenizer);
      FreeAndNil(preprocessor);
@@ -750,11 +750,9 @@ begin
      exit;
   end;
 
-  //if Length(preprocessor.warnings)>0 then begin
-     for sError in preprocessor.warnings do begin
-         WriteMessage(sError.sourceFile+':'+inttostr(sError.line)+': warning: '+sError.message);
-     end;
-  //end;
+  for sError in preprocessor.warnings do begin
+      WriteMessage(sError.sourceFile+':'+inttostr(sError.line)+': warning: '+sError.message);
+  end;
 
   Ass:=TAssembler.Create;
   try
