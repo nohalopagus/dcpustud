@@ -63,7 +63,7 @@ type
   end;
 
   const
-    Delimiters = [',', '[', ']', '(', ')', '+'];
+    Delimiters = [',', '[', ']', '(', ')', '+', '-', '*', '/', '%', '|', '^', '&', '!'];
 implementation
 
 function CTokenizer.parseLine(): TTokenizedLine;
@@ -281,11 +281,10 @@ end;
 function CTokenizer.parseString(): string;
 begin
      result := '';
-     if not (peek() = '"') then begin
+     if not (next() = '"') then begin
         addError('Implementation error while parsing string.');
         exit(result);
      end;
-     next();
 
      while True do begin
            if not hasNext() then begin
@@ -376,12 +375,15 @@ begin
 end;
 
 procedure CTokenizer.addError(message: string);
+var
+   n: integer;
 begin
-     SetLength(errors, Length(errors)+1);
-     errors[High(errors)].message:=message;
-     errors[High(errors)].line:=currentLineNr;
-     errors[High(errors)].sourceFile:=sourceFile;
-     skipLine();
+   n := length(errors);
+   SetLength(errors, n+1);
+   errors[n].message:=message;
+   errors[n].line:=currentLineNr;
+   errors[n].sourceFile:=sourceFile;
+   skipLine();
 end;
 end.
 
