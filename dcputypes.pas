@@ -5,7 +5,7 @@ unit DCPUtypes;
 interface
 type
     TOpArgumentType = (arRegister, arRegisterRefNW, arOffset, arPOP, arPEEK, arPUSH, arSP, arPC, arO, arReferenceNW, arLiteralNW, arSmallLiteral, arReference);
-    TCPURegister = (crA, crB, crC, crX, crY, crZ, crI, crJ, crPC, crSP, crO);
+    TCPURegister = (crA, crB, crC, crX, crY, crZ, crI, crJ, crPC, crSP, crEX);
     TCPUInstruction = (ciExtendedPrefix, ciSET, ciADD, ciSUB, ciMUL, ciDIV, ciMOD, ciSHL, ciSHR, ciAND, ciBOR, ciXOR, ciIFE, ciIFN, ciIFG, ciIFB, ciReserved, ciJSR, ciInvalid);
     TTokenType = (ttSymbol, ttNumber, ttString, ttDelimiter);
 
@@ -60,8 +60,8 @@ const
 
   defaultDefineValue: TToken = (tokenType:ttSymbol; intVal: 0; strVal:'0'; length: 0; linePos:0 );
   BaseInstrBits: integer = 5;
-
-function isCPURegisterName(symbol: string): boolean;
+  BaseInstrMask: integer = $1F;
+function isCPURegisterName(symbol: string): boolean;  inline;
 function getCPURegisterID(symbol: string): TCPURegister;
 function getCPUOpcode(opName: string): TCPUInstruction;
 function isDirective(str: string): boolean;
@@ -71,7 +71,7 @@ function isDORG(str: string):boolean;
 
 implementation
 
-function isCPURegisterName(symbol: string): boolean;
+function isCPURegisterName(symbol: string): boolean; inline;
 var
   reg: string;
 begin

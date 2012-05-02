@@ -34,8 +34,10 @@ type
     procedure SetMemory(Address: TMemoryAddress; const AValue: Word); inline;
     procedure SetResourceMemory(Address: TResourceAddress; const AValue: Word);
     function FetchNextWord: Word; inline;
-    procedure FetchNextInstruction(out Instruction: TCPUInstruction; out Destination: TResourceAddress; out ValueA, ValueB: Word); inline;
+    procedure FetchNextInstruction(out Instruction: TCPUInstruction; out Destination: TResourceAddress; out ValueB, ValueA: Word); inline;
     procedure RunNextInstruction;
+    function operandA(opcode: Word): Word; inline;
+    function operandB(opcode: Word): Word; inline;
   public
     constructor Create(AOwner: TComponent); override;
     procedure Reset;
@@ -118,7 +120,7 @@ begin
   Inc(BurnCycles);
 end;
 
-procedure TCPU.FetchNextInstruction(out Instruction: TCPUInstruction; out Destination: TResourceAddress; out ValueA, ValueB: Word);
+procedure TCPU.FetchNextInstruction(out Instruction: TCPUInstruction; out Destination: TResourceAddress; out ValueB, ValueA: Word);
 var
   OpCode: Word;
 
@@ -135,10 +137,7 @@ var
     else case AValue of
       $18: if not SkipInstruction then begin
         Result:=Memory[CPURegister[crSP]];
-        if CPURegister[crSP]=$FFFF then
-          CPURegister[crSP]:=0
-        else
-          CPURegister[crSP]:=CPURegister[crSP] + 1;
+        CPURegister[crSP]:= (CPURegister[crSP] + 1) and $FFFF;
       end;
       $19: Result:=Memory[CPURegister[crSP]];
       $1A: if not SkipInstruction then begin
@@ -150,7 +149,7 @@ var
       end;
       $1B: Result:=CPURegister[crSP];
       $1C: Result:=CPURegister[crPC];
-      $1D: Result:=CPURegister[crO];
+      $1D: Result:=CPURegister[crEX];
       $1E: Result:=Memory[FetchNextWord];
       $1F: Result:=FetchNextWord;
       else raise EDCPU16Exception.Create('Implementation error - the value ' + IntToStr(AValue) + ' cannot be decoded');
@@ -185,7 +184,7 @@ var
       end;
       $1B: Result:=RegisterResourceAddress(crSP);
       $1C: Result:=RegisterResourceAddress(crPC);
-      $1D: Result:=RegisterResourceAddress(crO);
+      $1D: Result:=RegisterResourceAddress(crEX);
       $1E: Result:=FetchNextWord;
       $1F: raise EDCPU16Exception.Create('Instruction at ' + HexStr(CPURegister[crPC] - 1, 4) + ' tried to write to a literal value')
       else raise EDCPU16Exception.Create('Implementation error - the destination value ' + IntToStr(AValue) + ' cannot be decoded');
@@ -194,27 +193,27 @@ var
 
 begin
   OpCode:=FetchNextWord;
-  Instruction:=TCPUInstruction(OpCode and $0F);
+  Instruction:=TCPUInstruction(OpCode and BaseInstrMask);
   if Instruction=ciExtendedPrefix then begin
-    Instruction:=TCPUInstruction(((opCode and $3F0) shr BaseInstrBits) + Ord(ciReserved));
+    Instruction:=TCPUInstruction(((opCode and $3e0) shr BaseInstrBits) + Ord(ciReserved));
     if Instruction in Mutators then begin
-      Destination:=DecodeResourceValue(OpCode shr 10);
+      Destination:=DecodeResourceValue(operandA(OpCode));
       ValueA:=ResourceMemory[Destination];
       ValueB:=0;
     end else begin
       Destination:=InvalidDestination;
-      ValueA:=DecodeResourceValue(OpCode shr 10);
+      ValueA:=DecodeResourceValue(operandA(OpCode));
       ValueB:=0;
     end;
   end else begin
     if Instruction in Mutators then begin
-      Destination:=DecodeResourceDestination((OpCode shr BaseInstrBits) and $3F);
-      ValueA:=ResourceMemory[Destination];
-      ValueB:=DecodeResourceValue(OpCode shr 10);
+      Destination:=DecodeResourceDestination(operandB(OpCode));
+      ValueB:=ResourceMemory[Destination];
+      ValueA:=DecodeResourceValue(operandA(OpCode));
     end else begin
       Destination:=InvalidDestination;
-      ValueA:=DecodeResourceValue((OpCode shr BaseInstrBits) and $3F);
-      ValueB:=DecodeResourceValue(OpCode shr 10);
+      ValueB:=DecodeResourceValue(operandB(OpCode));
+      ValueA:=DecodeResourceValue(operandA(OpCode));
     end;
   end;
   Inc(BurnCycles, CPUInstructionCycles[Instruction] - 1);
@@ -225,70 +224,75 @@ var
   Instruction: TCPUInstruction;
   ValueA, ValueB: Word;
   Destination: TResourceAddress;
+  tmpVal: integer;
 begin
   if Assigned(FOnBeforeExecution) then
     if not FOnBeforeExecution(Self, CPURegister[crPC]) then begin
       BurnCycles:=0;
       Exit;
     end;
-  FetchNextInstruction(Instruction, Destination, ValueA, ValueB);
+  FetchNextInstruction(Instruction, Destination, ValueB, ValueA);
   if SkipInstruction then begin
     FSkipInstruction:=False;
     Exit;
   end;
   case Instruction of
     ciExtendedPrefix: raise EDCPU16Exception.Create('Implementation error - unexpected extended prefix at ' + HexStr(CPURegister[crPC] - 1, 4));
-    ciSET: ResourceMemory[Destination]:=ValueB;
+    ciSET: ResourceMemory[Destination]:=ValueA;
     ciADD: begin
-      ResourceMemory[Destination]:=(ValueA + ValueB) and $FFFF;
-      if ValueA + ValueB > $FFFF then
-        CPURegister[crO]:=1
+      tmpVal := ValueA + ValueB;
+      ResourceMemory[Destination] := tmpVal and $FFFF;
+      if tmpVal > $FFFF then
+        CPURegister[crEX]:=1
       else
-        CPURegister[crO]:=0;
+        CPURegister[crEX]:=0;
     end;
     ciSUB: begin
-      ResourceMemory[Destination]:=(ValueA - ValueB) and $FFFF;
-      if ValueA - ValueB < 0 then
-        CPURegister[crO]:=$FFFF
+      tmpVal := ValueB - ValueA;
+      ResourceMemory[Destination] := tmpVal and $FFFF;
+      if tmpVal < 0 then
+        CPURegister[crEX]:=$FFFF
       else
-        CPURegister[crO]:=0;
+        CPURegister[crEX]:=0;
     end;
     ciMUL: begin
-      ResourceMemory[Destination]:=(ValueA * ValueB) and $FFFF;
-      CPURegister[crO]:=((ValueA*ValueB) shr 16) and $FFFF;
+      tmpVal := ValueA * ValueB;
+      ResourceMemory[Destination] := tmpVal and $FFFF;
+      CPURegister[crEX]:=(tmpVal shr 16) and $FFFF;
     end;
     ciDIV: begin
-      if ValueB=0 then begin
+      if ValueA=0 then begin
         ResourceMemory[Destination]:=0;
-        CPURegister[crO]:=0;
+        CPURegister[crEX]:=0;
       end else begin
-        ResourceMemory[Destination]:=(ValueA div ValueB) and $FFFF;
-        CPURegister[crO]:=((ValueA shl 16) div ValueB) and $FFFF;
+        ResourceMemory[Destination]:=(ValueB div ValueA) and $FFFF;
+        CPURegister[crEX]:=((ValueB shl 16) div ValueA) and $FFFF;
       end;
     end;
     ciMOD: begin
-      if ValueB=0 then
+      if ValueA=0 then
         ResourceMemory[Destination]:=0
       else
-        ResourceMemory[Destination]:=(ValueA mod ValueB) and $FFFF;
+        ResourceMemory[Destination] := (ValueB mod ValueA) and $FFFF;
     end;
     ciSHL: begin
-      ResourceMemory[Destination]:=(ValueA shl ValueB) and $FFFF;
-      CPURegister[crO]:=((ValueA shl ValueB) shr 16) and $FFFF;
+      tmpVal := ValueB shl ValueA;
+      ResourceMemory[Destination] := tmpVal and $FFFF;
+      CPURegister[crEX] := (tmpVal shr 16) and $FFFF;
     end;
     ciSHR: begin
-      ResourceMemory[Destination]:=(ValueA shr ValueB) and $FFFF;
-      CPURegister[crO]:=((ValueA shl 16) shr ValueB) and $FFFF;
+      ResourceMemory[Destination]:=(ValueB shr ValueA) and $FFFF;
+      CPURegister[crEX]:=((ValueB shl 16) shr ValueA) and $FFFF;
     end;
-    ciAND: ResourceMemory[Destination]:=(ValueA and ValueB) and $FFFF;
-    ciBOR: ResourceMemory[Destination]:=(ValueA or ValueB) and $FFFF;
-    ciXOR: ResourceMemory[Destination]:=(ValueA xor ValueB) and $FFFF;
+    ciAND: ResourceMemory[Destination] := (ValueB and ValueA) and $FFFF;
+    ciBOR: ResourceMemory[Destination] := (ValueB or ValueA) and $FFFF;
+    ciXOR: ResourceMemory[Destination] := (ValueB xor ValueA) and $FFFF;
     ciIFE, ciIFN, ciIFG, ciIFB: begin
       case Instruction of
-        ciIFE: FSkipInstruction:=ValueA <> ValueB;
-        ciIFN: FSkipInstruction:=ValueA=ValueB;
-        ciIFG: FSkipInstruction:=ValueA <= ValueB;
-        ciIFB: FSkipInstruction:=(ValueA and ValueB)=0;
+        ciIFE: FSkipInstruction:=ValueB <> ValueA;
+        ciIFN: FSkipInstruction:=ValueB=ValueA;
+        ciIFG: FSkipInstruction:=ValueB <= ValueA;
+        ciIFB: FSkipInstruction:=(ValueB and ValueA)=0;
       end;
       if FSkipInstruction then Inc(BurnCycles);
     end;
@@ -313,13 +317,13 @@ end;
 
 procedure TCPU.Reset;
 var
-  I: TCPURegister;
+  Reg: TCPURegister;
   J: Integer;
 begin
   FSkipInstruction:=False;
   FCycles:=0;
   BurnCycles:=0;
-  for I:=crA to crO do CPURegister[I]:=0;
+  for Reg in TCPURegister do CPURegister[Reg]:=0;
 end;
 
 procedure TCPU.RunCycle;
@@ -425,19 +429,29 @@ var
 
 begin
   OpCode:=GetNextWord;
-  Instruction:=TCPUInstruction(OpCode and $1F);
+  Instruction:=TCPUInstruction(OpCode and BaseInstrMask);
   if Instruction=ciExtendedPrefix then begin
     Instruction:=TCPUInstruction(((opCode and $3e0) shr BaseInstrBits) + Ord(ciReserved));
     if Instruction in [Low(TCPUInstruction)..High(TCPUInstruction)] then
-      Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter(OpCode shr 10)
+      Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter(operandA(OpCode))
     else
       Result:='; Invalid opcode - ' + HexStr(OpCode, 4);
   end else begin
     if Instruction in [Low(TCPUInstruction)..High(TCPUInstruction)] then
-      Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter((OpCode shr BaseInstrBits) and $1F) + ', ' + DecodeParameter(OpCode shr 10)
+      Result:=CPUInstructionNames[Instruction] + ' ' + DecodeParameter(operandB(OpCode)) + ', ' + DecodeParameter(operandA(OpCode))
     else
       Result:='; Invalid opcode - ' + HexStr(OpCode, 4);
   end;
+end;
+
+function TCPU.operandA(opcode: Word): Word; inline;
+begin
+  exit(opcode shr 10);
+end;
+
+function TCPU.operandB(opcode: Word): Word; inline;
+begin
+  exit((opcode shr BaseInstrBits) and $1F);
 end;
 
 end.

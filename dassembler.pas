@@ -389,9 +389,9 @@ var
       Args[I]:=AssembleArgument();
     end;
     if Ord(AInstr) < Ord(ciReserved) then begin
-      OpCodes[IAddr] := Ord(AInstr) or (Args[0] shl BaseInstrBits) or (Args[1] shl 10);
+      OpCodes[IAddr] := (Args[1] shl 10) or (Args[0] shl BaseInstrBits) or Ord(AInstr);
     end else begin
-      OpCodes[IAddr]:=((Ord(AInstr) - Ord(ciReserved)) shl BaseInstrBits) or (Args[0] shl 10);
+      OpCodes[IAddr] := (Args[0] shl 10) or ((Ord(AInstr) - Ord(ciReserved)) shl BaseInstrBits);
     end;
   end;
 
