@@ -119,14 +119,17 @@ begin
               Continue;
            end;
 
-           addError(tline.sourceFile, tline.lineNumber, 'Invalid preprocessor directive: ' + tline.tokens[0].strVal);
+           addError(tline.sourceFile, tline.lineNumber, 'invalid preprocessor directive: ' + tline.tokens[0].strVal);
            exit;
         end;
 
         if peekIF() then addLine(tline);
     end;
     preprocessed:=work;
+    SetLength(work, 0);
   end;
+  if Length(ifstack) <> 1 then
+     addError(tline.sourceFile, tline.lineNumber, 'unmatched #if[n]def/#endif');
 end;
 
 procedure CPreprocessor.preprocess(lines: TTokenizedLines; incPath: string; def: TPPDefines);
@@ -147,41 +150,40 @@ var
    nDefine: TPPDefine;
 begin
   if length(tline.tokens) <> 2 then begin
-     addError(tline.sourceFile, tline.lineNumber, 'Invalid #include format (#include "filename")');
+     addError(tline.sourceFile, tline.lineNumber, 'invalid #include format (#include "filename")');
      exit;
   end;
   if tline.tokens[1].tokenType <> ttString then begin
-     addError(tline.sourceFile, tline.lineNumber, 'Invalid #include format, filename should be a string.');
+     addError(tline.sourceFile, tline.lineNumber, 'invalid #include format, filename should be a string.');
      exit;
   end;
   included := TStringList.Create();
   try
      included.LoadFromFile(includePath + tline.tokens[1].strVal);
   except
-     addError(tline.sourceFile, tline.lineNumber, 'Include file not found.');
+     addError(tline.sourceFile, tline.lineNumber, 'include file not found.');
      FreeAndNil(included);
      exit;
   end;
-
   tokenizer := CTokenizer.Create();
   preprocessor := CPreprocessor.Create();
   tokenizer.tokenize(included.Text, tline.tokens[1].strVal);
-  if high(tokenizer.errors) <> 0 then begin
+  if length(tokenizer.errors) > 0 then begin
+     addError(tline.sourceFile, tline.lineNumber, 'errors in included file'+inttostr(high(tokenizer.errors)));
      for tError in tokenizer.errors do
          addError(tError.sourceFile, tError.line, tError.message);
   end else begin
       preprocessor := CPreprocessor.Create();
       preprocessor.preprocess(tokenizer.tokenized, includePath, defines);
-      if high(preprocessor.errors) <> 0 then begin
+      if length(preprocessor.errors) > 0 then begin
          for nError in preprocessor.errors do
             addError(nError.sourceFile, nError.line, nError.message);
       end else begin
           for nWarning in preprocessor.warnings do
              addWarning(nWarning.sourceFile, nWarning.line, nWarning.message);
+          defines := preprocessor.defines;
           for newtline in preprocessor.preprocessed do
              addIncludedLine(newtline);
-          for nDefine in preprocessor.defines do
-             addDefine(nDefine.name, nDefine.value, nDefine.src);
       end;
   end;
   FreeAndNil(preprocessor);
@@ -265,6 +267,7 @@ var
    n: integer;
    i: integer;
 begin
+     addWarning('a', 0, 'AL: '+tline.tokens[0].strVal);
      n := Length(work);
      SetLength(work, n+1);
      work[n] := tline;
