@@ -20,11 +20,12 @@ type
       errors: TSimpleErrors;
       warnings: TSimpleErrors;
 
-      procedure preprocess(lines: TTokenizedLines);
+      procedure preprocess(lines: TTokenizedLines; incPath: string);
     private
       work: TTokenizedLines;
       defines: TPPDefines;
       ifstack: array of boolean;
+      includePath: string;
       procedure processInclude(tline: TTokenizedLine);
       procedure addLine(tline: TTokenizedLine);
       procedure addIncludedLine(tline: TTokenizedLine);
@@ -40,12 +41,12 @@ type
       procedure addDefine(symbol: string; value: TToken; src: TTokenizedLine);
       function  getDefined(symbol: string): TToken;
     protected
-      procedure preprocess(lines: TTokenizedLines; def: TPPDefines);
+      procedure preprocess(lines: TTokenizedLines; incPath: string; def: TPPDefines);
   end;
 
 implementation
 
-procedure CPreprocessor.preprocess(lines: TTokenizedLines);
+procedure CPreprocessor.preprocess(lines: TTokenizedLines; incPath: string);
 var
   rerun: boolean = true;
   tline: TTokenizedLine;
@@ -53,7 +54,7 @@ var
   I: integer;
   found: Boolean;
 begin
-
+  includePath:=incPath;
   preprocessed:=lines;
   SetLength(ifstack, Length(ifstack)+1);
   ifstack[0]:=true;
@@ -128,10 +129,10 @@ begin
   end;
 end;
 
-procedure CPreprocessor.preprocess(lines: TTokenizedLines; def: TPPDefines);
+procedure CPreprocessor.preprocess(lines: TTokenizedLines; incPath: string; def: TPPDefines);
 begin
   defines := def;
-  preprocess(lines);
+  preprocess(lines, incPath);
 end;
 
 procedure CPreprocessor.processInclude(tline: TTokenizedLine);
@@ -154,7 +155,7 @@ begin
   end;
   included := TStringList.Create();
   try
-     included.LoadFromFile(tline.tokens[1].strVal);
+     included.LoadFromFile(includePath + tline.tokens[1].strVal);
   except
      addError(tline.sourceFile, tline.lineNumber, 'Include file not found.');
      FreeAndNil(included);
@@ -169,7 +170,7 @@ begin
          addError(tError.sourceFile, tError.line, tError.message);
   end else begin
       preprocessor := CPreprocessor.Create();
-      preprocessor.preprocess(tokenizer.tokenized, defines);
+      preprocessor.preprocess(tokenizer.tokenized, includePath, defines);
       if high(preprocessor.errors) <> 0 then begin
          for nError in preprocessor.errors do
             addError(nError.sourceFile, nError.line, nError.message);
