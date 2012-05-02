@@ -144,6 +144,7 @@ var
    tError: TSimpleError;
    nError: TSimpleError;
    nWarning: TSimpleError;
+   nDefine: TPPDefine;
 begin
   if length(tline.tokens) <> 2 then begin
      addError(tline.sourceFile, tline.lineNumber, 'Invalid #include format (#include "filename")');
@@ -179,6 +180,8 @@ begin
              addWarning(nWarning.sourceFile, nWarning.line, nWarning.message);
           for newtline in preprocessor.preprocessed do
              addIncludedLine(newtline);
+          for nDefine in preprocessor.defines do
+             addDefine(nDefine.name, nDefine.value, nDefine.src);
       end;
   end;
   FreeAndNil(preprocessor);
