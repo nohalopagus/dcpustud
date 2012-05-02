@@ -259,7 +259,9 @@ begin
   end;
   case Instruction of
     ciExtendedPrefix: raise EDCPU16Exception.Create('Implementation error - unexpected extended prefix at ' + HexStr(CPURegister[crPC] - 1, 4));
+
     ciSET: ResourceMemory[Destination]:=ValueA;
+
     ciADD: begin
       tmpVal := ValueA + ValueB;
       ResourceMemory[Destination] := tmpVal and $FFFF;
@@ -268,6 +270,7 @@ begin
       else
         CPURegister[crEX]:=0;
     end;
+
     ciSUB: begin
       tmpVal := ValueB - ValueA;
       ResourceMemory[Destination] := tmpVal and $FFFF;
@@ -276,11 +279,20 @@ begin
       else
         CPURegister[crEX]:=0;
     end;
+
+    { MUL, MLI }
     ciMUL: begin
       tmpVal := ValueA * ValueB;
       ResourceMemory[Destination] := tmpVal and $FFFF;
       CPURegister[crEX]:=(tmpVal shr 16) and $FFFF;
     end;
+    ciMLI: begin
+      tmpVal := signed(ValueA) * signed(ValueB);
+      ResourceMemory[Destination] := tmpVal and $FFFF;
+      CPURegister[crEX]:=(tmpVal shr 16) and $FFFF;
+    end;
+
+    { DIV, DVI }
     ciDIV: begin
       if ValueA=0 then begin
         ResourceMemory[Destination]:=0;
@@ -290,34 +302,103 @@ begin
         CPURegister[crEX]:=((ValueB shl 16) div ValueA) and $FFFF;
       end;
     end;
+    ciDVI: begin
+      if ValueA=0 then begin
+        ResourceMemory[Destination]:=0;
+        CPURegister[crEX]:=0;
+      end else begin
+        ResourceMemory[Destination]:=(signed(ValueB) div signed(ValueA)) and $FFFF;
+        CPURegister[crEX]:=((signed(ValueB) shl 16) div signed(ValueA)) and $FFFF;
+      end;
+    end;
+
+    { MOD, MDI }
     ciMOD: begin
       if ValueA=0 then
         ResourceMemory[Destination]:=0
       else
         ResourceMemory[Destination] := (ValueB mod ValueA) and $FFFF;
     end;
+    ciMDI: begin
+      if ValueA=0 then
+        ResourceMemory[Destination]:=0
+      else
+        ResourceMemory[Destination] := (signed(ValueB) mod signed(ValueA)) and $FFFF;
+    end;
+
+    { AND, BOR, XOR }
+    ciAND: ResourceMemory[Destination] := (ValueB and ValueA) and $FFFF;
+    ciBOR: ResourceMemory[Destination] := (ValueB or ValueA) and $FFFF;
+    ciXOR: ResourceMemory[Destination] := (ValueB xor ValueA) and $FFFF;
+
+    { SHR, ASR, SHL }
+    ciSHR: begin
+      ResourceMemory[Destination]:=(ValueB shr ValueA) and $FFFF;
+      CPURegister[crEX]:=((ValueB shl 16) shr ValueA) and $FFFF;
+    end;
+    ciASR: begin
+      ResourceMemory[Destination]:=(ValueB shr ValueA) and $FFFF;
+      CPURegister[crEX]:=((ValueB shl 16) shr ValueA) and $FFFF;
+    end;
     ciSHL: begin
       tmpVal := ValueB shl ValueA;
       ResourceMemory[Destination] := tmpVal and $FFFF;
       CPURegister[crEX] := (tmpVal shr 16) and $FFFF;
     end;
-    ciSHR: begin
-      ResourceMemory[Destination]:=(ValueB shr ValueA) and $FFFF;
-      CPURegister[crEX]:=((ValueB shl 16) shr ValueA) and $FFFF;
-    end;
-    ciAND: ResourceMemory[Destination] := (ValueB and ValueA) and $FFFF;
-    ciBOR: ResourceMemory[Destination] := (ValueB or ValueA) and $FFFF;
-    ciXOR: ResourceMemory[Destination] := (ValueB xor ValueA) and $FFFF;
-    ciIFE, ciIFN, ciIFG, ciIFB: begin
+
+    { IFx }
+    ciIFB, ciIFC, ciIFE, ciIFN, ciIFG, ciIFA, ciIFL, ciIFU: begin
       case Instruction of
+        ciIFB: FSkipInstruction:=(ValueB and ValueA) = 0;
+        ciIFC: FSkipInstruction:=(ValueB and ValueA) <> 0;
+
         ciIFE: FSkipInstruction:=ValueB <> ValueA;
         ciIFN: FSkipInstruction:=ValueB=ValueA;
+
         ciIFG: FSkipInstruction:=ValueB <= ValueA;
-        ciIFB: FSkipInstruction:=(ValueB and ValueA)=0;
+        ciIFA: FSkipInstruction:=signed(ValueB) <= signed(ValueA);
+
+        ciIFL: FSkipInstruction:=ValueB >= ValueA;
+        ciIFU: FSkipInstruction:=signed(ValueB) >= signed(ValueA);
+
       end;
       if FSkipInstruction then Inc(BurnCycles);
     end;
+
+    { ADX, SBX }
+    ciADX: begin
+      tmpVal:= ValueB + ValueA + CPURegister[crEX];
+      if tmpVal > $FFFF then
+        CPURegister[crEX]:=1;
+      else
+        CPURegister[crEX]:=0;
+      ResourceMemory[Destination] := tmpVal and $FFFF;
+    end;
+
+    ciSBX: begin
+      tmpVal:= ValueB - ValueA + CPURegister[crEX];
+      if tmpVal < 0 then
+        CPURegister[crEX] := $FFFF;
+      else
+        CPURegister[crEX] := 0;
+      ResourceMemory[Destination] := tmpVal and $FFFF;
+    end;
+
+    { STI, STD }
+    ciSTI: begin
+      ResourceMemory[Destination] = ValueA;
+      CPURegister[crI] = (CPURegister[crI] + 1) and $FFFF;
+      CPURegister[crJ] = (CPURegister[crJ] + 1) and $FFFF;
+    end;
+    ciSTI: begin
+      ResourceMemory[Destination] = ValueA;
+      CPURegister[crI] = (CPURegister[crI] - 1) and $FFFF;
+      CPURegister[crJ] = (CPURegister[crJ] - 1) and $FFFF;
+    end;
+
     ciReservedEX: raise EDCPU16Exception.Create('Implementation error - unexpected reserved extended opcode at ' + HexStr(CPURegister[crPC] - 1, 4));
+
+    { JSR }
     ciJSR: begin
       if CPURegister[crSP]=$0 then
         CPURegister[crSP]:=$FFFF

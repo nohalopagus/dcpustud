@@ -124,8 +124,13 @@ function isDData(str: string):boolean;
 function isDReserve(str: string):boolean;
 function isDORG(str: string):boolean;
 function instructionArgCount(insn: TCPUInstruction): integer; inline;
-
+function signed(value: integer): integer; inline;
 implementation
+
+function signed(value: integer): integer; inline;
+begin
+  exit((value and $7FFF) + ((value shr 15) * -$FFFF));
+end;
 
 function instructionArgCount(insn: TCPUInstruction): integer; inline;
 begin
