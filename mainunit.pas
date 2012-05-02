@@ -463,6 +463,7 @@ begin
   CPU.UseBigEndianWords:=mCPUUseBigEndianWords.Checked;
 end;
 
+
 procedure TMain.mFileNewClick(Sender: TObject);
 begin
   if ConfirmOk then begin
@@ -715,12 +716,16 @@ var
   aError: TAssemblerError;
   sError: TSimpleError;
   currentFile: string;
+  includePath: string;
 begin
   tokenizer := CTokenizer.Create();
   if FileName='' then
     currentFile:='<buffer>'
   else
     currentFile:=FileName;
+  includePath:=ExtractFilePath(currentFile);
+
+  WriteMessage('Include path: '+includePath);
   IgnoreFollow:=True;
   WriteMessage('Tokenizing...');
   tokenizer.upcaseSymbols:=true;
@@ -735,7 +740,7 @@ begin
   end;
   preprocessor := CPreprocessor.Create();
   WriteMessage('Preprocessing...');
-  preprocessor.preprocess(tokenizer.tokenized);
+  preprocessor.preprocess(tokenizer.tokenized, includePath);
   if Length(preprocessor.errors)>0 then begin
      for sError in preprocessor.errors do begin
          WriteMessage(sError.sourceFile+':'+inttostr(sError.line)+': error: '+sError.message);
