@@ -386,14 +386,14 @@ begin
 
     { STI, STD }
     ciSTI: begin
-      ResourceMemory[Destination] = ValueA;
-      CPURegister[crI] = (CPURegister[crI] + 1) and $FFFF;
-      CPURegister[crJ] = (CPURegister[crJ] + 1) and $FFFF;
+      ResourceMemory[Destination] := ValueA;
+      CPURegister[crI] := (CPURegister[crI] + 1) and $FFFF;
+      CPURegister[crJ] := (CPURegister[crJ] + 1) and $FFFF;
     end;
     ciSTD: begin
-      ResourceMemory[Destination] = ValueA;
-      CPURegister[crI] = (CPURegister[crI] - 1) and $FFFF;
-      CPURegister[crJ] = (CPURegister[crJ] - 1) and $FFFF;
+      ResourceMemory[Destination] := ValueA;
+      CPURegister[crI] := (CPURegister[crI] - 1) and $FFFF;
+      CPURegister[crJ] := (CPURegister[crJ] - 1) and $FFFF;
     end;
 
     ciReservedEX: raise EDCPU16Exception.Create('Implementation error - unexpected reserved extended opcode at ' + HexStr(CPURegister[crPC] - 1, 4));
