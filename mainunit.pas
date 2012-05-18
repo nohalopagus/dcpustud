@@ -270,7 +270,7 @@ begin
   SpinEditByReg[crJ]:=seJ;
   SpinEditByReg[crPC]:=sePC;
   SpinEditByReg[crSP]:=seSP;
-  SpinEditByReg[crO]:=seO;
+  SpinEditByReg[crEX]:=seO;
   {$IFDEF WINDOWS}
   lbDisassembly.Font.Name:='FixedSys';
   lbMemoryDump.Font.Name:='FixedSys';
@@ -618,7 +618,7 @@ end;
 
 procedure TMain.seOChange(Sender: TObject);
 begin
-  CPU.CPURegister[crO]:=seO.Value;
+  CPU.CPURegister[crEX]:=seO.Value;
 end;
 
 procedure TMain.sePCChange(Sender: TObject);
@@ -668,7 +668,7 @@ begin
   NowTicks:=GetTickCount;
   if Running then begin
     if CycleExact then begin
-      for Reg:=crA to crO do
+      for Reg:=crA to crEX do
         SpinEditByReg[Reg].Color:=clDefault;
       try
         if NowTicks - LastTicks > 5000 then LastTicks:=NowTicks;
@@ -932,7 +932,7 @@ procedure TMain.SingleStep;
 var
   Reg: TCPURegister;
 begin
-  for Reg:=crA to crO do
+  for Reg:=crA to crEX do
     SpinEditByReg[Reg].Color:=clDefault;
   try
     CPU.RunInstruction;
@@ -956,7 +956,7 @@ begin
   LastTicks:=GetTickCount;
   for I:=0 to High(ExecutedMark) do ExecutedMark[I]:=False;
   CPU.Reset;
-  for Reg:=crA to crO do begin
+  for Reg:=crA to crEX do begin
     PrevRegValues[Reg]:=CPU.CPURegister[Reg];
     SpinEditByReg[Reg].Color:=clDefault;
   end;
@@ -1055,7 +1055,7 @@ procedure TMain.UpdateAllMonitors;
 var
   Reg: TCPURegister;
 begin
-  for Reg:=crA to crO do
+  for Reg:=crA to crEX do
     SpinEditByReg[Reg].Value:=CPU.CPURegister[Reg];
   lbDisassembly.Invalidate;
   lbMemoryDump.Invalidate;
