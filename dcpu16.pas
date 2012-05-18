@@ -369,7 +369,7 @@ begin
     ciADX: begin
       tmpVal:= ValueB + ValueA + CPURegister[crEX];
       if tmpVal > $FFFF then
-        CPURegister[crEX]:=1;
+        CPURegister[crEX]:=1
       else
         CPURegister[crEX]:=0;
       ResourceMemory[Destination] := tmpVal and $FFFF;
@@ -378,7 +378,7 @@ begin
     ciSBX: begin
       tmpVal:= ValueB - ValueA + CPURegister[crEX];
       if tmpVal < 0 then
-        CPURegister[crEX] := $FFFF;
+        CPURegister[crEX] := $FFFF
       else
         CPURegister[crEX] := 0;
       ResourceMemory[Destination] := tmpVal and $FFFF;
@@ -390,7 +390,7 @@ begin
       CPURegister[crI] = (CPURegister[crI] + 1) and $FFFF;
       CPURegister[crJ] = (CPURegister[crJ] + 1) and $FFFF;
     end;
-    ciSTI: begin
+    ciSTD: begin
       ResourceMemory[Destination] = ValueA;
       CPURegister[crI] = (CPURegister[crI] - 1) and $FFFF;
       CPURegister[crJ] = (CPURegister[crJ] - 1) and $FFFF;
