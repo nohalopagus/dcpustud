@@ -81,7 +81,7 @@ const
                         0, 0, 0, 0,
                         0,
                         0);
-  Mutators = [ciSET, ciADD, ciSUB, ciMUL, ciDIV, ciDVI, ciMOD, ciMDI, ciSHL, ciSHR, ciAND, ciBOR, ciXOR];
+  Mutators = [ciSET, ciADD, ciADX, ciSUB, ciSBX, ciMUL, ciDIV, ciDVI, ciMOD, ciMDI, ciSHL, ciSHR, ciAND, ciBOR, ciXOR];
   InvalidDestination = High(TResourceAddress);
   SymbolCharacter = ['A'..'Z', 'a'..'z', '0'..'9', '_'];
 
