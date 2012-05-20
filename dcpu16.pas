@@ -11,7 +11,7 @@ type
   EDCPU16Exception = class(Exception);
 
   TCPURegister = (crA, crB, crC, crX, crY, crZ, crI, crJ, crPC, crSP, crO);
-  TCPUInstruction = (ciExtendedPrefix, ciSET, ciADD, ciSUB, ciMUL, ciDIV, ciMOD, ciSHL, ciSHR, ciAND, ciBOR, ciXOR, ciIFE, ciIFN, ciIFG, ciIFB, ciReserved, ciJSR);
+  TCPUInstruction = (ciExtendedPrefix, ciSET, ciADD, ciADX, ciSUB, ciSBX, ciMUL, ciDIV, ciDVI, ciMOD, ciMDI, ciSHL, ciSHR, ciAND, ciBOR, ciXOR, ciIFE, ciIFN, ciIFG, ciIFB, ciReserved, ciJSR);
 
   TMemoryAddress = $0..$FFFF;
   TResourceAddress = $0..High(TMemoryAddress) + Ord(High(TCPURegister)) + 2;
